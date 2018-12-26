@@ -1,4 +1,5 @@
-مستندات پیش رو به منظور استفاده از سرویس رسانا در اپلیکیشن های اندروید تهیه شده است.</span>
+<div dir="rtl">
+<p style="text-align: right;"><span class="right-tit" style="font-weight: 400;">مستندات پیش رو به منظور استفاده از سرویس رسانا در اپلیکیشن های اندروید تهیه شده است.</span>
 <span style="font-weight: 400;">در فایل build.gradle کل پروژه تغییرات زیر را اعمال کنید.</span></p>
 
 <pre class="show-plain-default:true scroll:true minimize:true expand:true lang:java decode:true ">allprojects {
@@ -201,5 +202,4 @@ resana.onNativeAdClicked(Context context, NativeAd ad, AdDelegate adDelegate)</p
               resana.onNativeAdRendered(ad);
       } 
 }</pre>
-<p style="text-align: right;"></p>
-
+</div>
