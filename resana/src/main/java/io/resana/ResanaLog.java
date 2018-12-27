@@ -29,7 +29,7 @@ import java.util.Locale;
 final class ResanaLog {
     public static final String TAG_PREF = "RESANA-";
     private static final boolean LogToFile = false;
-    public static final String SDK_VERSION_NAME = "2.0.1";
+    private static final String SDK_VERSION_NAME = "2.0.1";
     private OutputStreamWriter streamWriter = null;
     private SimpleDateFormat dateFormat;
     private FileLogThread logQueue = null;
@@ -37,7 +37,7 @@ final class ResanaLog {
     private static int logLevel;
 
     private static int getLogLevel() {
-        return logLevel > 0 ? logLevel : Resana.LOG_LEVEL_INFO;
+        return logLevel > 0 ? logLevel : Resana.LOG_LEVEL_NO_LOG;
     }
 
     static void setLogLevel(int logLevel) {
