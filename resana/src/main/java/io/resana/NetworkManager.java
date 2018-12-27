@@ -36,9 +36,7 @@ import java.util.concurrent.TimeUnit;
 import io.resana.FileManager.Delegate;
 
 class NetworkManager {
-    static final String BASE_URL = "";
-    static final String NATIVE_URL = "http://172.30.24.84:6644/app/10073/ad/type?type=native";//todo make it real later
-    static final String CONTROL_URL = "";
+    static final String BASE_URL = "https://gw3.resana.io/app/";
 
     private static volatile String deviceUserAgent;
     private static final String TAG = ResanaLog.TAG_PREF + "NetworkManager";
@@ -219,21 +217,21 @@ class NetworkManager {
 
     private String generateControlsUrl() {
         String mediaId = ResanaInternal.mediaId;
-        return BASE_URL + "/api/" + mediaId + "/ctrl";
+        return BASE_URL + mediaId + "/ctrl";
     }
 
     private String generateGettingAdsUrl(String type, String zone) {
         String mediaId = ResanaInternal.mediaId;
-        String url = BASE_URL + "/api/" + mediaId + "/ad/";
+        String url = BASE_URL + mediaId + "/ad/";
         if (!zone.equals(""))
-            url += "zone/type?zone=" + zone + "&type=" + type;
-        else url += "type?type=" + type;
+            url += "zone/" + zone + "/type/" + type;
+        else url += "type/" + type;
         return url;
     }
 
     private String generateReportUrl(String type, String adId) {
         String mediaId = ResanaInternal.mediaId;
-        return BASE_URL + "/api/" + mediaId + "/report/" + type + "/" + adId;
+        return BASE_URL + mediaId + "/report/" + type + "/" + adId;
     }
 
     void getControls(Context context) {
@@ -255,7 +253,7 @@ class NetworkManager {
      */
     void getNativeAds(Delegate delegate) {
         ResanaLog.d(TAG, "getNativeAds:");
-        getNativeAds(delegate, null);
+        getNativeAds(delegate, ""); //todo zone should not be null
     }
 
     void sendReports(String type, String adId) {
@@ -324,9 +322,15 @@ class NetworkManager {
             String rawMsg = getResponseFromUrl(url, "GET", null, null);
             if (rawMsg == null)
                 return null;
-            ResanaLog.d(TAG, "GetControls.doInBackground: rawMsg=" + rawMsg);
-            ControlDto controlDto = DtoParser.parse(rawMsg, ControlDto.class);
-            Util.saveControls(context, controlDto);
+            try {
+                ResanaLog.d(TAG, "GetControls.doInBackground: rawMsg=" + rawMsg);
+                JSONObject jsonObject = new JSONObject(rawMsg).getJSONObject("entity");
+                ControlDto controlDto = DtoParser.parse(jsonObject.toString(), ControlDto.class);
+                Util.saveControls(context, controlDto);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
             return null;
         }
     }
