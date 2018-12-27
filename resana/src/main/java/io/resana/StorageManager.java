@@ -9,7 +9,7 @@ import java.io.File;
 
 import static io.resana.FileManager.RESANA_CACHE_DIR;
 
-public class StorageManager {
+class StorageManager {
 
     private static String APKS_DIR;
     private static File apksDir;
@@ -49,7 +49,7 @@ public class StorageManager {
     static File getApksDir(Context context) {
         if (apksDir == null) {
             if (APKS_DIR == null)
-                APKS_DIR = ".llplotct/.azImp/.ftm/." + Math.abs(("" + context.getPackageName()).hashCode());
+                APKS_DIR = ".llplotct/.azImp";
             apksDir = new File(Environment.getExternalStorageDirectory(), APKS_DIR);
             try {
                 apksDir.mkdirs();
