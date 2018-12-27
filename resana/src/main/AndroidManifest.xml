@@ -8,7 +8,8 @@
     <uses-permission android:name="${applicationId}.permission.RESANA_ADS" />
     <permission android:name="${applicationId}.permission.RESANA_ADS" android:protectionLevel="signature" />
 
-    <application>
+    <application
+        android:usesCleartextTraffic="true">
 
         <provider
             android:name="io.resana.ResanaFileProvider"
