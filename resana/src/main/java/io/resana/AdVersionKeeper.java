@@ -44,8 +44,7 @@ class AdVersionKeeper {
     }
 
     static boolean isRenderedEnough(Ad ad) {
-        return getOrderRenderCount(ad.getOrder()) >= ad.data.maxView
-                || ad.renderedCount >= ad.data.ctl;
+        return getOrderRenderCount(ad.getOrder()) >= ad.data.maxView;
     }
 
     private static void cleanupPrefs() {
