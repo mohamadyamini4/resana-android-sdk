@@ -21,9 +21,9 @@ class ControlDto implements Parcelable, Serializable {
         }
     };
     @SerializedName("ch0")
-    int nativeChance = 1;
+    float nativeChance = 1;
     @SerializedName("ch1")
-    int splashChance = 1;
+    float splashChance = 1;
     @SerializedName("ttl")
     int controlsTTL = 1000;
     @SerializedName("rl")
@@ -34,8 +34,8 @@ class ControlDto implements Parcelable, Serializable {
     int videoStickyChance = 1;
 
     protected ControlDto(Parcel in) {
-        nativeChance = in.readInt();
-        splashChance = in.readInt();
+        nativeChance = in.readFloat();
+        splashChance = in.readFloat();
         videoStickyChance = in.readInt();
         controlsTTL = in.readInt();
         resanaLabel = in.readString();
@@ -49,8 +49,8 @@ class ControlDto implements Parcelable, Serializable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(nativeChance);
-        dest.writeInt(splashChance);
+        dest.writeFloat(nativeChance);
+        dest.writeFloat(splashChance);
         dest.writeInt(videoStickyChance);
         dest.writeInt(controlsTTL);
         dest.writeString(resanaLabel);
