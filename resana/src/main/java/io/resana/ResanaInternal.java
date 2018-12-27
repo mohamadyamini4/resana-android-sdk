@@ -98,11 +98,6 @@ class ResanaInternal {
         return localInstance;
     }
 
-    void internalRelease() {
-        saveSessionDuration();
-        instance = null;
-    }
-
     private boolean shouldGetControls() {
         return ((System.currentTimeMillis() / 1000) - Util.getControlsTS(appContext)) >= Util.getControlsTTL(appContext);
     }
@@ -209,15 +204,5 @@ class ResanaInternal {
 
     boolean isInDismissRestTime() {
         return System.currentTimeMillis() < lastDismissTime + dismissRestDuration * 1000;
-    }
-
-    private static class GetControlDataDelegate extends FileManager.Delegate {
-
-        @Override
-        void onFinish(boolean success, Object... args) {
-            if (success) {
-                //todo save controls
-            }
-        }
     }
 }
