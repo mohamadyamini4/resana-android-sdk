@@ -8,6 +8,8 @@ import java.util.List;
 public class Resana {
     ResanaInternal instance;
 
+    private static Resana resana;
+
     private static Context appContext;
 
     /**
@@ -35,10 +37,6 @@ public class Resana {
      */
     public static final int LOG_LEVEL_NO_LOG = 100;
 
-    private Resana(ResanaInternal resanaInternal) {
-        this.instance = resanaInternal;
-    }
-
     public static void init(Context context, ResanaConfig resanaConfig) {
         if (resanaConfig == null)
             throw new IllegalArgumentException("ResanaConfig cannot be null");
@@ -47,15 +45,28 @@ public class Resana {
         ResanaInternal.getInstance(appContext);
     }
 
-    public static void setLogLevel(int logLevel) {
+    public static Resana getInstance() {
+        Resana localInstance = resana;
+        if (localInstance == null) {
+            synchronized (Resana.class) {
+                localInstance = resana;
+                if (localInstance == null) {
+                    localInstance = resana = new Resana();
+                }
+            }
+        }
+        return localInstance;
+    }
+
+    public void setLogLevel(int logLevel) {
         ResanaLog.setLogLevel(logLevel);
     }
 
-    public static NativeAd getNativeAd(boolean hasTitle) {
+    public NativeAd getNativeAd(boolean hasTitle) {
         return ResanaInternal.getInstance(appContext).getNativeAd(hasTitle);
     }
 
-    public static NativeAd getNativeAd(boolean hasTitle, String zone) {
+    public NativeAd getNativeAd(boolean hasTitle, String zone) {
         return ResanaInternal.getInstance(appContext).getNativeAd(hasTitle, zone);
     }
 
@@ -92,7 +103,12 @@ public class Resana {
         return null;
     }
 
-    public static String getVersion() {
+    public String getVersion() {
         return ResanaInternal.SDK_VERSION;
+    }
+
+    @Deprecated
+    public void release() {
+
     }
 }
