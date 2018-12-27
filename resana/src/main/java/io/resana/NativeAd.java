@@ -61,18 +61,16 @@ public class NativeAd {
         this.callForAction = ad.data.callForAction;
         this.shortOrdinaryText = ((NativeDto) ad.data).texts.ordinaryText.shortText;
         this.mediumOrdinaryText = ((NativeDto) ad.data).texts.ordinaryText.mediumText;
-        if (((NativeDto) ad.data).texts.titleText != null) {
+        if (((NativeDto) ad.data).texts != null && ((NativeDto) ad.data).texts.titleText != null) {
             this.shortTitleText = ((NativeDto) ad.data).texts.titleText.shortText;
             this.mediumTitleText = ((NativeDto) ad.data).texts.titleText.mediumText;
         }
-
         if (((NativeDto) ad.data).visuals != null && ((NativeDto) ad.data).visuals.size() > 0) {
             visuals = new ArrayList<>();
             for (VisualDto visualDto : ((NativeDto) ad.data).visuals) {
                 visuals.add(new NativeAd.Visual(visualDto));
             }
         }
-
         this.secretKey = secretKey;
     }
 
@@ -102,7 +100,7 @@ public class NativeAd {
         return null;
     }
 
-    String getLandingUrl() {
+    private String getLandingUrl() {
         return landingUrl;
     }
 
@@ -115,7 +113,7 @@ public class NativeAd {
      * {@link #VIDEO} for video.
      * {@link #WEB_PAGE} for web view
      */
-    public int getLandingType() {
+    int getLandingType() {
         return landingType;
     }
 
@@ -191,9 +189,25 @@ public class NativeAd {
         return mediumTitleText;
     }
 
+    /**
+     * will be removed on january 2019
+     */
+    @Deprecated
     public Visual getVisual() {
         int index = VisualsManager.getVisualIndex(context, this);
         return visuals.get(index);
+    }
+
+    public Landing getOrgVisual() {
+        return getVisual().orgVisual;
+    }
+
+    public Landing getSqVisual() {
+        return getVisual().sqVisual;
+    }
+
+    public Landing getHrzVisual() {
+        return getVisual().hrzVisual;
     }
 
 
@@ -209,6 +223,10 @@ public class NativeAd {
         return labelFileName;
     }
 
+    /**
+     * class for visuals which contains org, sq and hrz visual. every visual is an image which
+     * contains file and size.
+     */
     public class Visual {
         Landing orgVisual;
         Landing sqVisual;
@@ -233,16 +251,17 @@ public class NativeAd {
         }
     }
 
+    /**
+     * class for images which contains file of image, type, width and height of an image.
+     */
     public class Landing {
         private File imageFile;
-        private String url;
         private String type;
         private Integer width;
         private Integer height;
 
         Landing(LandingDto landingDto) {
             this.imageFile = new FileManager.FileSpec(landingDto.getFileName()).getFile(context);
-            this.url = landingDto.url;
             this.type = landingDto.type;
             this.width = landingDto.width;
             this.height = landingDto.height;
