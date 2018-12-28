@@ -86,25 +86,6 @@ class ApkManager {
         return pkgs;
     }
 
-    static void installApk(Context context, File apk, AdDelegate adDelegate) {
-        try {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            Uri n = ResanaFileProvider.getUriForFile(context, context.getPackageName() + ".provider", apk);
-            if (Build.VERSION.SDK_INT >= 24)
-                i.setDataAndType(n, "application/vnd.android.package-archive");
-            else
-                i.setDataAndType(Uri.fromFile(apk), "application/vnd.android.package-archive");
-            context.startActivity(i);
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (adDelegate == null)
-                Toast.makeText(context, "مشکلی در نصب برنامه بوجود آمد", Toast.LENGTH_SHORT).show();
-            else adDelegate.onInstallingProgramError();
-        }
-    }
-
     boolean isApkDownloading(Context context, File apkFile) {//todo check
         if (!apkFile.exists())
             return false;
@@ -117,32 +98,4 @@ class ApkManager {
         File apkFile = new FileSpec(FileSpec.DIR_TYPE_APKS, ad.getApkFileName()).getFile(appContext);
         return isApkDownloading(context, apkFile);
     }
-
-    void downloadAndInstallApk(final NativeAd ad, final AdDelegate adDelegate) {
-        if (ad == null)
-            return;
-        FileSpec apkFileSpec = new FileSpec(FileSpec.DIR_TYPE_APKS, ad.getApkFileName());
-        File apkFile = apkFileSpec.getFile(appContext);
-        ResanaLog.d(TAG, "DownloadAndInstallApk: apk file name: " + apkFile.getName());
-        if (isApkDownloading(appContext, apkFile))
-            return;
-        if (adDelegate == null)
-            Toast.makeText(appContext, "در حال آماده سازی", Toast.LENGTH_SHORT).show();
-        else adDelegate.onPreparingProgram();
-        FileManager.getInstance(appContext).downloadFile(new FileSpec(ad.getApkUrl(), FileSpec.DIR_TYPE_APKS, ad.getApkFileName()), false, new FileManager.Delegate() {
-            @Override
-            void onFinish(boolean success, Object... args) {
-                if (!success) {
-                    if (adDelegate == null)
-                        Toast.makeText(appContext, "مشکلی در آماده سازی برنامه به وجود آمده است", Toast.LENGTH_SHORT).show();
-                    else adDelegate.onPreparingProgramError();
-                } else {
-                    GoalActionMeter.getInstance(appContext).checkInstall(ad.getOrder(), ad.getApkPackageName());
-                    File apk = new FileSpec(FileSpec.DIR_TYPE_APKS, ad.getApkFileName()).getFile(appContext);
-                    ApkManager.installApk(appContext, apk, adDelegate);
-                }
-            }
-        });
-    }
-
 }
