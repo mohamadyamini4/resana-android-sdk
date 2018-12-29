@@ -41,7 +41,6 @@ final class Ad implements Parcelable, Serializable {
 
     boolean isCorrupted;
     AdDto data;
-    ControlDto[] ctrls;
     int renderedCount;
 
     //SubtitleView state saving specific parameters
@@ -75,10 +74,6 @@ final class Ad implements Parcelable, Serializable {
             default:
                 throw new RuntimeException("Can not parse Ad. unknown type!");
         }
-    }
-
-    boolean isControlMsg() {
-        return ctrls != null;
     }
 
     boolean hasLanding() {
@@ -252,7 +247,6 @@ final class Ad implements Parcelable, Serializable {
     protected Ad(Parcel in) {
         isCorrupted = in.readByte() != 0;
         data = in.readParcelable(AdDto.class.getClassLoader());
-        ctrls = in.createTypedArray(ControlDto.CREATOR);
         textAnimCurrentPlayTime = in.readLong();
         imageShowingTimeElapsed = in.readLong();
         renderedCount = in.readInt();
@@ -262,7 +256,6 @@ final class Ad implements Parcelable, Serializable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeByte((byte) (isCorrupted ? 1 : 0));
         dest.writeParcelable(data, flags);
-        dest.writeTypedArray(ctrls, flags);
         dest.writeLong(textAnimCurrentPlayTime);
         dest.writeLong(imageShowingTimeElapsed);
         dest.writeInt(renderedCount);
