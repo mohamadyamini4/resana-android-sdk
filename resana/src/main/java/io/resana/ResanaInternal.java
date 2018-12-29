@@ -104,10 +104,6 @@ class ResanaInternal {
         return ((System.currentTimeMillis() / 1000) - Util.getControlsTS(appContext)) >= Util.getControlsTTL(appContext);
     }
 
-    NativeAd getNativeAd() {
-        return getNativeAd("");
-    }
-
     NativeAd getNativeAd(String zone) {
         return NativeAdProvider.getInstance(appContext).getAd(zone);
     }

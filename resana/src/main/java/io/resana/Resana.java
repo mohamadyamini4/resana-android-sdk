@@ -63,7 +63,7 @@ public class Resana {
     }
 
     public NativeAd getNativeAd() {
-        return ResanaInternal.getInstance(appContext).getNativeAd();
+        return ResanaInternal.getInstance(appContext).getNativeAd("all");
     }
 
     public NativeAd getNativeAd(String zone) {
