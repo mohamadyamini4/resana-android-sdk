@@ -258,9 +258,7 @@ class NativeAdProvider {
             else adDelegate.onPreparingProgram();
             return;
         }
-        if (ad.hasApk()) {
-            ApkManager.getInstance(context).downloadAndInstallApk(ad, adDelegate);
-        } else if (ad.hasIntent()) {
+        if (ad.hasIntent()) {
             Intent intent = ad.getIntent();
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             if (intent.resolveActivity(context.getPackageManager()) != null)
