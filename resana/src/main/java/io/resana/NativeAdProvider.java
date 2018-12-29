@@ -46,7 +46,7 @@ class NativeAdProvider {
         NetworkManager.getInstance().getNativeAds(new AdsReceivedDelegate(appContext));
     }
 
-    static boolean isBlockedZone(String zone) {
+    private boolean isBlockedZone(String zone) {
         if (blockedZones == null || zone == null || zone.equals(""))
             return false;
         return Arrays.asList(blockedZones).contains(zone);
