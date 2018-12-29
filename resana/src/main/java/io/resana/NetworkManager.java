@@ -363,4 +363,11 @@ class NetworkManager {
             super(s);
         }
     }
+
+    class Reports {
+        static final String view = "view";
+        static final String click = "click1";
+        static final String landingClick = "click2";
+        static final String install = "install";
+    }
 }

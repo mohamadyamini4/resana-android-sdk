@@ -9,6 +9,8 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import io.resana.NetworkManager.Reports;
+
 class GoalActionMeter {
     private final static String REPORTS_PREF = "RESANA_REPORTS_29871";
     private static GoalActionMeter instance;
@@ -75,7 +77,7 @@ class GoalActionMeter {
         @Override
         protected void onPostExecute(Boolean success) {
             if (success) //todo handle fail reports
-                NetworkManager.getInstance().sendReports(NativeAdProvider.Reports.install, adId);
+                NetworkManager.getInstance().sendReports(Reports.install, adId);
         }
     }
 }

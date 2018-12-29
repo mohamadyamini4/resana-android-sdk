@@ -12,11 +12,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.resana.NetworkManager.Reports;
+
 import static io.resana.FileManager.Delegate;
 
 class NativeAdProvider {
     private static final String TAG = ResanaLog.TAG_PREF + "NativeAdProvider";
-    private static final String CLICK_ACK_PREFS = "RESANA_CLICK_ACK_PREFS" + 2;
 
     private static NativeAdProvider instance;
     private Context appContext;
@@ -335,12 +336,5 @@ class NativeAdProvider {
                 NativeAdProvider.getInstance(context).adDownloaded(downloadedAd);
             }
         }
-    }
-
-    class Reports {
-        static final String view = "view";
-        static final String click = "click1";
-        static final String landingClick = "click2";
-        static final String install = "install";
     }
 }
