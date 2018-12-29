@@ -8,6 +8,8 @@ import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.resana.NetworkManager.Reports;
+
 import static io.resana.ResanaPreferences.PREF_DISMISS_ENABLE;
 import static io.resana.ResanaPreferences.PREF_DISMISS_OPTIONS;
 import static io.resana.ResanaPreferences.PREF_DISMISS_REST_DURATION;
@@ -43,8 +45,6 @@ class ResanaInternal {
     private Context appContext;
     static String mediaId;
     static String deviceId;
-
-    private SplashAdProvider splashProvider;
 
     boolean adsAreDismissible;
     List<DismissOption> dismissOptions;
@@ -107,10 +107,6 @@ class ResanaInternal {
     }
 
     NativeAd getNativeAd(String zone) {
-        if (!ResanaConfig.gettingNativeAds(appContext)) {
-            ResanaLog.e(TAG, "You didn't mention native ads in resana config");
-            return null;
-        }
         return NativeAdProvider.getInstance(appContext).getAd(zone);
     }
 
@@ -119,25 +115,19 @@ class ResanaInternal {
             ResanaLog.e(TAG, "You didn't mention splash ads in resana config");
             return;
         }
-        splashProvider.attachViewer(adView);
+        SplashAdProvider.getInstance(appContext).attachViewer(adView);
     }
 
     void releaseSplash(Ad ad) {
-        if (splashProvider == null)
-            return;
-        splashProvider.releaseAd(ad);
+        SplashAdProvider.getInstance(appContext).releaseAd(ad);
     }
 
     void detachSplashViewer(SplashAdView adView) {
-        if (splashProvider == null)
-            return;
-        splashProvider.detachViewer(adView);
+        SplashAdProvider.getInstance(appContext).detachViewer(adView);
     }
 
     boolean isSplashAvailable() {
-        if (splashProvider == null)
-            return false;
-        return splashProvider.isAdAvailable();
+        return SplashAdProvider.getInstance(appContext).isAdAvailable();
     }
 
     private void loadDismissOptions() {
@@ -164,9 +154,7 @@ class ResanaInternal {
     }
 
     void onSplashRendered(Ad ad) {
-        if (splashProvider == null)
-            return;
-//        sendToServer(splashProvider.getRenderAck(ad));
+        NetworkManager.getInstance().sendReports(Reports.view, ad.getOrder());
     }
 
     void onNativeAdClicked(Context context, NativeAd ad) {
@@ -174,10 +162,8 @@ class ResanaInternal {
     }
 
     void onSplashClicked(Ad ad) {
-        if (splashProvider == null)
-            return;
-//        GoalActionMeter.getInstance(appContext).checkReport(ad.data.report);
-//        sendToServer(splashProvider.getClickAck(ad));
+        NetworkManager.getInstance().sendReports(Reports.click, ad.getOrder());
+        GoalActionMeter.getInstance(appContext).checkInstall(ad.getOrder(), ad.getPackageName());
     }
 
     void onNativeAdLongClick(Context context, NativeAd ad) {
@@ -186,9 +172,7 @@ class ResanaInternal {
     }
 
     void onSplashLandingClicked(Ad ad) {
-        if (splashProvider == null)
-            return;
-//        sendToServer(splashProvider.getLandingClickAck(ad));
+        NetworkManager.getInstance().sendReports(Reports.landingClick, ad.getOrder());
     }
 
     void onAdDismissed(String secretKey, DismissOption reason) {
