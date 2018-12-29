@@ -14,9 +14,7 @@ import static io.resana.FileManager.DOWNLOADED_SPLASHES_FILE_NAME;
 import static io.resana.FileManager.Delegate;
 import static io.resana.FileManager.FileSpec;
 import static io.resana.FileManager.PersistableObject;
-import static io.resana.FileManager.RESANA_CACHE_DIR;
 import static io.resana.FileManager.SPLASHES_FILE_NAME;
-import static io.resana.FileManager.SPLASH_FILE_NAME_PREFIX;
 
 class SplashAdProvider {
     private static final String TAG = ResanaLog.TAG_PREF + "SplashAdProvider";
@@ -52,7 +50,6 @@ class SplashAdProvider {
         this.downloadedAdsQueueLength = 3;
         this.downloadedAdsFileName = DOWNLOADED_SPLASHES_FILE_NAME;
         NetworkManager.getInstance().getSplashAds(new AdsReceivedDelegate(context));
-        loadCachedAds();
     }
 
     static SplashAdProvider getInstance(Context context) {
@@ -64,41 +61,6 @@ class SplashAdProvider {
             }
         }
         return localInstance;
-    }
-
-    private void loadCachedAds() {
-        ResanaLog.d(TAG, "loadCachedAds: ");
-        isLoadingCachedAds = true;
-        List<FileSpec> files = new ArrayList<>();
-        files.add(new FileSpec(adsFileName));
-        files.add(new FileSpec(downloadedAdsFileName));
-        FileManager.getInstance(appContext).loadObjectsFromFile(files, new LoadCacheAdsDelegate(this));
-    }
-
-    private void loadingCachedAdsFinished(boolean success, Object... args) {
-        BoundedLinkedHashSet<Ad> ads = args[0] != null ? (BoundedLinkedHashSet<Ad>) args[0] : new BoundedLinkedHashSet<Ad>(adsQueueLength);
-        LinkedHashSet<Ad> dlAds = args[1] != null ? (LinkedHashSet<Ad>) args[1] : new LinkedHashSet<Ad>();
-        syncFiles(dlAds);
-        cachedAdsLoaded(ads, dlAds);
-    }
-
-    private void syncFiles(LinkedHashSet<Ad> dlAds) {
-        ResanaLog.d(TAG, "syncFiles: ");
-        final Iterator<Ad> iterator = dlAds.iterator();
-        while (iterator.hasNext()) {
-            final Ad ad = iterator.next();
-            for (FileSpec f : ad.getDownloadableFiles(appContext)) {
-                if (!f.getFile(appContext).exists()) {
-                    iterator.remove();
-                    break;
-                }
-            }
-        }
-        List<String> files = new ArrayList<>();
-        for (Ad ad : dlAds)
-            for (FileSpec f : ad.getDownloadableFiles(appContext))
-                files.add(f.name);
-        FileManager.getInstance(appContext).pruneFiles(RESANA_CACHE_DIR, SPLASH_FILE_NAME_PREFIX + ".*", files, null);
     }
 
     boolean isAdAvailable() {
@@ -172,19 +134,6 @@ class SplashAdProvider {
         for (Ad ad : toRemove) {
             ads.remove(ad);
         }
-    }
-
-    private void cachedAdsLoaded(BoundedLinkedHashSet<Ad> ads, LinkedHashSet<Ad> dlAds) {
-        ResanaLog.d(TAG, "cachedAdsLoaded: ");
-        this.downloadedAds = createDownloadedAdsPersistableObject();
-        for (Ad s : dlAds)
-            addToDownloadedAds(s);
-        isLoadingCachedAds = false;
-        if (needsFlushCache)
-            flushCache();
-        updateAdQueues();
-        if (shouldServeViewer())
-            serveViewerIfPossible();
     }
 
     private PersistableObject<BoundedLinkedHashSet<Ad>> createAdsPersistableObject(BoundedLinkedHashSet<Ad> ads) {
@@ -409,21 +358,6 @@ class SplashAdProvider {
         void onFinish(boolean success, Object... args) {
             if (success)
                 SplashAdProvider.getInstance(context).newAdsReceived((List<Ad>) args[0]);
-        }
-    }
-
-    private static class LoadCacheAdsDelegate extends Delegate {
-        WeakReference<SplashAdProvider> providerRef;
-
-        public LoadCacheAdsDelegate(SplashAdProvider provider) {
-            providerRef = new WeakReference<>(provider);
-        }
-
-        @Override
-        void onFinish(boolean success, Object... args) {
-            final SplashAdProvider provider = providerRef.get();
-            if (provider != null)
-                provider.loadingCachedAdsFinished(success, args);
         }
     }
 
