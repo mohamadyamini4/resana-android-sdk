@@ -1,22 +1,14 @@
 package io.resana;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.net.Uri;
-import android.os.Build;
 import android.text.TextUtils;
-import android.widget.Toast;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.resana.FileManager.FileSpec;
-
 class ApkManager {
     private static final String TAG = ResanaLog.TAG_PREF + "ApkManager";
-    private static final String PREFS = "RESANA_APKS_76432369";
 
     private static ApkManager instance;
     private Context appContext;
@@ -40,10 +32,6 @@ class ApkManager {
         this.appContext = context.getApplicationContext();
     }
 
-    private static boolean canDownloadApk(Context context) {
-        return StorageManager.canWriteToStorage(context) && StorageManager.canReadFromStorage(context);
-    }
-
     boolean isApkInstalled(Ad ad) {
         if (!ad.hasPackageName())
             return false;
@@ -54,21 +42,7 @@ class ApkManager {
         return getInstalledPackages().contains(pkg);
     }
 
-    /**
-     * will check that ad is invalid or not. if ad has apk file and that apk is installed, this ad is invalid
-     * and should not be shown to use.
-     * if app does't has read and write permission, this ad is invalid too.
-     *
-     * @param ad
-     * @return whether ad is invalid or not
-     */
-    boolean isAdInvalid(Ad ad) {
-        return
-                isApkInstalled(ad)
-                || !canDownloadApk(appContext);
-    }
-
-    List<String> getInstalledPackages() {
+    private List<String> getInstalledPackages() {
         if (installedPackages != null && System.currentTimeMillis() - lastPackagesUpdateTime < 15000)
             return installedPackages;
         installedPackages = getInstalledPackagesFromSystem();
@@ -76,7 +50,7 @@ class ApkManager {
         return installedPackages;
     }
 
-    List<String> getInstalledPackagesFromSystem() {
+    private List<String> getInstalledPackagesFromSystem() {
         List<String> pkgs = new ArrayList<>();
         final List<ApplicationInfo> apps = appContext.getPackageManager().getInstalledApplications(0);
         if (apps != null)
@@ -84,18 +58,5 @@ class ApkManager {
                 if (app != null && !TextUtils.isEmpty(app.packageName) && (app.flags & ApplicationInfo.FLAG_SYSTEM) == 0)
                     pkgs.add(app.packageName);
         return pkgs;
-    }
-
-    boolean isApkDownloading(Context context, File apkFile) {//todo check
-        if (!apkFile.exists())
-            return false;
-        return ResanaPreferences.getBoolean(context, apkFile.getName() + ResanaPreferences.PREF_DOWNLOADING_APK, false);
-    }
-
-    boolean isApkDownloading(Context context, NativeAd ad) {
-        if (!ad.hasApk())
-            return false;
-        File apkFile = new FileSpec(FileSpec.DIR_TYPE_APKS, ad.getApkFileName()).getFile(appContext);
-        return isApkDownloading(context, apkFile);
     }
 }

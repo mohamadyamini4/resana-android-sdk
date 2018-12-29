@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -252,12 +251,6 @@ class NativeAdProvider {
     private void handleLandingClick(final Context context, final NativeAd ad, AdDelegate adDelegate) {
         if (ResanaInternal.instance == null)
             return;
-        if (ApkManager.getInstance(context).isApkDownloading(context, ad)) {
-            if (adDelegate == null)
-                Toast.makeText(appContext, "در حال آماده سازی", Toast.LENGTH_SHORT).show();
-            else adDelegate.onPreparingProgram();
-            return;
-        }
         if (ad.hasIntent()) {
             Intent intent = ad.getIntent();
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
