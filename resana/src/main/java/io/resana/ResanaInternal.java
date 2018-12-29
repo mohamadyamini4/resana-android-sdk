@@ -78,11 +78,13 @@ class ResanaInternal {
 
     private void initializeDeviceId() {
         if (getBoolean(appContext, UUID_EXISTS, false)) {
+            deviceId = getString(appContext, UUID, "9e8f6aba-f02f-46a5-a4e4-90b6c5e9a2eb");
+            deviceId = DeviceCredentials.getDeviceUniqueId(appContext);
+        } else {
             deviceId = DeviceCredentials.getDeviceUniqueId(appContext);
             saveString(appContext, UUID, deviceId);
             saveBoolean(appContext, UUID_EXISTS, true);
-        } else
-            deviceId = getString(appContext, UUID, "9e8f6aba-f02f-46a5-a4e4-90b6c5e9a2eb");
+        }
     }
 
     static ResanaInternal getInstance(Context context) {
