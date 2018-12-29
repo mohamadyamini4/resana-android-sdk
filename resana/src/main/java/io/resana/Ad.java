@@ -127,13 +127,13 @@ final class Ad implements Parcelable, Serializable {
         return data.link;
     }
 
-    String getImgUrl() {
+    private String getImgUrl() {
         if (getType() == AdDto.AD_TYPE_SPLASH)
-            return AdViewUtil.getResizedImageUrl(((SplashDto) data).pic);
+            return AdViewUtil.getResizedImageUrl(((SplashDto) data).visuals.get(0).splash.url);
         return null;
     }
 
-    String getLandingImageUrl() {
+    private String getLandingImageUrl() {
         if (getType() == AdDto.AD_TYPE_SPLASH)
             return AdViewUtil.getResizedImageUrl(((SplashDto) data).landing.url);
         else if (getType() == AdDto.AD_TYPE_NATIVE)
@@ -184,7 +184,7 @@ final class Ad implements Parcelable, Serializable {
         return null;
     }
 
-    boolean hasCustomLabel() {
+    private boolean hasCustomLabel() {
         return data.resanaLabel != null;
     }
 
@@ -243,7 +243,6 @@ final class Ad implements Parcelable, Serializable {
         return "Ad{" +
                 "isCorrupted=" + isCorrupted +
                 ", data=" + data +
-                ", ctrls=" + ctrls +
                 ", renderedCount=" + renderedCount +
                 ", textAnimCurrentPlayTime=" + textAnimCurrentPlayTime +
                 ", imageShowingTimeElapsed=" + imageShowingTimeElapsed +
