@@ -10,9 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import static io.resana.FileManager.DOWNLOADED_SPLASHES_FILE_NAME;
 import static io.resana.FileManager.Delegate;
-import static io.resana.FileManager.FileSpec;
 import static io.resana.FileManager.PersistableObject;
 import static io.resana.FileManager.SPLASHES_FILE_NAME;
 
@@ -28,14 +26,11 @@ class SplashAdProvider {
     private String adsFileName;
     private int downloadedAdsQueueLength;
     private PersistableObject<LinkedHashSet<Ad>> downloadedAds;
-    private String downloadedAdsFileName;
 
     private int currentlyDownloadingAds;
-    private boolean isLoadingCachedAds;
     private HashMap<String, Integer> locks = new HashMap<>();
     private List<Ad> toBeDeletedAds = new ArrayList<>();
 
-    private boolean needsFlushCache;
     private WeakReference<SplashAdView> adViewerRef;
 
     private SplashAdProvider(Context context) {
@@ -44,7 +39,6 @@ class SplashAdProvider {
         ads = Collections.synchronizedList(new ArrayList<Ad>());
         this.adsFileName = SPLASHES_FILE_NAME;
         this.downloadedAdsQueueLength = 3;
-        this.downloadedAdsFileName = DOWNLOADED_SPLASHES_FILE_NAME;
         NetworkManager.getInstance().getSplashAds(new AdsReceivedDelegate(context));
     }
 
@@ -83,26 +77,6 @@ class SplashAdProvider {
         garbageCollectAdFiles();
     }
 
-    void flushCache() {
-        ResanaLog.d(TAG, "flushCache: ");
-        if (isLoadingCachedAds) {
-            needsFlushCache = true;
-            return;
-        }
-        needsFlushCache = false;
-        ads.clear();
-        final Iterator<Ad> itr = downloadedAds.get().iterator();
-        Ad ad;
-        while (itr.hasNext()) {
-            ad = itr.next();
-            unlockAdFiles(ad);
-            toBeDeletedAds.add(ad);
-            itr.remove();
-        }
-        downloadedAds.persist();
-        garbageCollectAdFiles();
-    }
-
     /**
      * This function is called when new ads are received from sever.
      * new ads that are received will store in a list.
@@ -117,7 +91,8 @@ class SplashAdProvider {
                 ads.add(0, item);
             else ads.add(item);
         }
-        updateAdQueues();
+        downloadFirstAdOfList();
+//        updateAdQueues();
     }
 
     private void pruneAds(List<Ad> ads) {
@@ -132,30 +107,19 @@ class SplashAdProvider {
         }
     }
 
-    private PersistableObject<BoundedLinkedHashSet<Ad>> createAdsPersistableObject(BoundedLinkedHashSet<Ad> ads) {
-        ResanaLog.d(TAG, "createAdsPersistableObject: ");
-        if (ads == null)
-            ads = new BoundedLinkedHashSet<>(adsQueueLength);
-        return new PersistableObject<BoundedLinkedHashSet<Ad>>(ads) {
+    private void downloadFirstAdOfList() {
+        final Ad ad = ads.get(0);
+        downloadAdFiles(ad, new Delegate() {//todo complete here
             @Override
-            void onPersist() {
-                final FileSpec file = new FileSpec(adsFileName);
-                final BoundedLinkedHashSet<Ad> adsCopy = new BoundedLinkedHashSet<>(adsQueueLength, get());
-                FileManager.getInstance(appContext).persistObjectToFile(adsCopy, file, new FilePersistedDelegate(this));
+            void onFinish(boolean success, Object... args) {
+                ResanaLog.e(TAG, "downloadFirstAdOfList: success=" + success + " ad=" + ad.getId());
             }
-        };
+        });
     }
 
-    private PersistableObject<LinkedHashSet<Ad>> createDownloadedAdsPersistableObject() {
-        ResanaLog.d(TAG, "createDownloadedAdsPersistableObject: ");
-        return new PersistableObject<LinkedHashSet<Ad>>(new LinkedHashSet<Ad>(downloadedAdsQueueLength)) {
-            @Override
-            void onPersist() {
-                final FileSpec file = new FileSpec(downloadedAdsFileName);
-                final LinkedHashSet<Ad> adsCopy = new LinkedHashSet<>(get());
-                FileManager.getInstance(appContext).persistObjectToFile(adsCopy, file, new FilePersistedDelegate(this));
-            }
-        };
+    private void downloadAdFiles(final Ad ad, Delegate delegate) {
+        VisualsManager.saveVisualsIndex(appContext, ad);
+        FileManager.getInstance(appContext).downloadAdFiles(ad, delegate);
     }
 
     private void addToDownloadedAds(Ad ad) {
@@ -165,9 +129,6 @@ class SplashAdProvider {
     }
 
     private void serveViewerIfPossible() {
-        ResanaLog.d(TAG, "serveViewerIfPossible: isLoadingCachedAds=" + isLoadingCachedAds);
-        if (isLoadingCachedAds)
-            return;
         final SplashAdView viewer = adViewerRef.get();
         if (shouldCoolDownSplashViewing()) {
             viewer.cancelShowingAd("Cool Down Showing Splash.");
