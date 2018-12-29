@@ -88,14 +88,15 @@ final class Ad implements Parcelable, Serializable {
     boolean isInvalid(Context context) {
         Log.e(TAG, "isInvalid: isOldVersion: " + AdVersionKeeper.isOldVersion(this)
          + " isRenderedEnough: " + AdVersionKeeper.isRenderedEnough(this)
-         + "ApkInstalled: " + ApkManager.getInstance(context).isApkInstalled(this));
+         + " ApkInstalled: " + ApkManager.getInstance(context).isApkInstalled(this)
+         + " ad  " + getId());//todo remove this log
         return AdVersionKeeper.isOldVersion(this)
                 || AdVersionKeeper.isRenderedEnough(this)
                 || ApkManager.getInstance(context).isApkInstalled(this);
     }
 
-    boolean hasApk() {
-        return data.apk != null && data.apk.url != null && !data.apk.url.equals("");
+    boolean shouldCheckApkInstallation() {
+        return hasPackageName();
     }
 
     boolean hasPackageName() {
@@ -106,12 +107,6 @@ final class Ad implements Parcelable, Serializable {
         if (hasPackageName())
             return data.apk.pkg;
         return "";
-    }
-
-    String getApkUrl() {
-        if (hasApk())
-            return data.apk.url;
-        return null;
     }
 
     Integer getType() {

@@ -21,10 +21,9 @@ public class NativeAd {
     private String labelFileName;
     private String link;
     private String intentUri;
+    private boolean shouldCheckApkInstallation;
     private String landingUrl;
     private int landingType;
-    private String apkUrl;
-    private String apkFileName;
     private String apkPackageName;
     private String labelUrl;
     private String labelText;
@@ -45,6 +44,7 @@ public class NativeAd {
         this.labelFileName = ad.getLabelFileName();
         this.link = ad.data.link;
         this.intentUri = ad.data.intent;
+        shouldCheckApkInstallation = ad.shouldCheckApkInstallation();
         if (ad.data.landing != null) {
             this.landingUrl = ad.data.landing.url;
             this.landingType = ad.data.landing.getLandingType();
@@ -54,8 +54,6 @@ public class NativeAd {
             this.labelText = ad.data.resanaLabel.text;
         } else
             labelText = ResanaPreferences.getString(context, ResanaPreferences.PREF_RESANA_INFO_TEXT, ResanaInternal.DEFAULT_RESANA_INFO_TEXT);
-        this.apkUrl = ad.getApkUrl();
-        this.apkFileName = ad.hasApk() ? ad.data.apk.getApkFileName() : null;
         this.apkPackageName = ad.getPackageName();
         this.backgroundColor = ad.data.backgroundColor;
         this.callForAction = ad.data.callForAction;
@@ -100,6 +98,10 @@ public class NativeAd {
         return null;
     }
 
+    boolean shouldCheckApkInstallation() {
+        return shouldCheckApkInstallation;
+    }
+
     private String getLandingUrl() {
         return landingUrl;
     }
@@ -127,18 +129,6 @@ public class NativeAd {
 
     String getLabelUrl() {
         return labelUrl;
-    }
-
-    boolean hasApk() {
-        return apkUrl != null;
-    }
-
-    String getApkUrl() {
-        return apkUrl;
-    }
-
-    String getApkFileName() {
-        return apkFileName;
     }
 
     String getApkPackageName() {

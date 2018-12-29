@@ -108,6 +108,7 @@ class NativeAdProvider {
      * @param ads
      */
     private void pruneAds(List<Ad> ads) {
+        ResanaLog.d(TAG, "pruneAds:");
         List<Ad> toRemove = new ArrayList<>();
         for (Ad ad : ads) {
             if (ad.isInvalid(appContext))
@@ -155,6 +156,7 @@ class NativeAdProvider {
 
     private Ad internalGetAd(boolean hasTitle, String zone) {
         if (adsMap == null) {
+            ResanaLog.e(TAG, "internalGetAd: ads map is null");
             return null;
         }
         List<Ad> adList = adsMap.get(zone);
@@ -176,9 +178,17 @@ class NativeAdProvider {
             else adList.add(ad);
             if (CoolDownHelper.shouldShowNativeAd(appContext))
                 return ad;
-            else return null;
+            else {
+                ResanaLog.e(TAG, "internalGetAd: should not show ad");
+                return null;
+            }
+        } else {
+            ResanaLog.e(TAG, "internalGetAd: ad is not downloaded");
+            adList.remove(ad);
+            if (!ad.data.hot)
+                adList.add(ad);
+            return null;
         }
-        return null;
     }
 
     /**
@@ -203,9 +213,17 @@ class NativeAdProvider {
             return null;
         }
         final Ad ad = internalGetAd(hasTitle, zone);
+        for (Map.Entry<String, List<Ad>> entry : adsMap.entrySet()) {//todo remove this logging all ads
+            Log.e(TAG, "zone: " + entry.getKey());
+            List<Ad> addd = entry.getValue();
+            for (Ad a :
+                    addd) {
+                Log.e(TAG, "ads: " + a.getId());
+            }
+        }
         if (ad != null) {
-            adsMap.get(zone).remove(0);
             downloadAdFiles(zone);
+            ResanaLog.e(TAG, "getAd: " + ad.getId());//todo remove this log
             return new NativeAd(appContext, ad, AdDatabase.getInstance(appContext).generateSecretKey(ad));
         }
         return null;
@@ -217,12 +235,14 @@ class NativeAdProvider {
         pruneAds();
     }
 
-    void onNativeAdClicked(Context context, NativeAd ad, AdDelegate delegate) {
+    void onNativeAdClicked(Context context, NativeAd ad) {
         NetworkManager.getInstance().sendReports(Reports.click, ad.getId() + "");
+        if (ad.shouldCheckApkInstallation())
+            GoalActionMeter.getInstance(appContext).checkInstall(ad.getId() + "", ad.getApkPackageName());
         if (ad.hasLanding()) {
-            showLanding(context, ad, delegate);
+            showLanding(context, ad);
         } else {
-            handleLandingClick(context, ad, delegate);
+            handleLandingClick(context, ad);
         }
     }
 
@@ -230,7 +250,7 @@ class NativeAdProvider {
         NetworkManager.getInstance().sendReports(Reports.landingClick, ad.getId() + "");
     }
 
-    private void showLanding(final Context context, final NativeAd ad, final AdDelegate adDelegate) {
+    private void showLanding(final Context context, final NativeAd ad) {
         final NativeLandingView nativeLandingView = new NativeLandingView(context, ad);
         nativeLandingView.setDelegate(new LandingView.Delegate() {
             @Override
@@ -240,7 +260,7 @@ class NativeAdProvider {
 
             @Override
             public void landingActionClicked() {
-                handleLandingClick(context, ad, adDelegate);
+                handleLandingClick(context, ad);
                 onNativeAdLandingClicked(ad);
                 nativeLandingView.dismiss();
             }
@@ -248,7 +268,7 @@ class NativeAdProvider {
         nativeLandingView.show();
     }
 
-    private void handleLandingClick(final Context context, final NativeAd ad, AdDelegate adDelegate) {
+    private void handleLandingClick(final Context context, final NativeAd ad) {
         if (ResanaInternal.instance == null)
             return;
         if (ad.hasIntent()) {
