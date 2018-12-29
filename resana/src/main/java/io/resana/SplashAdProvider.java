@@ -4,6 +4,7 @@ import android.content.Context;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -18,11 +19,14 @@ import static io.resana.FileManager.SPLASHES_FILE_NAME;
 import static io.resana.FileManager.SPLASH_FILE_NAME_PREFIX;
 
 class SplashAdProvider {
-    private static final String TAG = "SplashAdProvider";
+    private static final String TAG = ResanaLog.TAG_PREF + "SplashAdProvider";
+
+    private static SplashAdProvider instance;
+
     private Context appContext;
 
     private int adsQueueLength;
-    private PersistableObject<BoundedLinkedHashSet<Ad>> ads;
+    private List<Ad> ads;
     private String adsFileName;
     private int downloadedAdsQueueLength;
     private PersistableObject<LinkedHashSet<Ad>> downloadedAds;
@@ -40,13 +44,26 @@ class SplashAdProvider {
     private boolean needsFlushCache;
     private WeakReference<SplashAdView> adViewerRef;
 
-    SplashAdProvider(Context context) {
+    private SplashAdProvider(Context context) {
         this.appContext = context.getApplicationContext();
         this.adsQueueLength = 4;
+        ads = Collections.synchronizedList(new ArrayList<Ad>());
         this.adsFileName = SPLASHES_FILE_NAME;
         this.downloadedAdsQueueLength = 3;
         this.downloadedAdsFileName = DOWNLOADED_SPLASHES_FILE_NAME;
+        NetworkManager.getInstance().getSplashAds(new AdsReceivedDelegate(context));
         loadCachedAds();
+    }
+
+    static SplashAdProvider getInstance(Context context) {
+        SplashAdProvider localInstance = instance;
+        synchronized (SplashAdProvider.class) {
+            localInstance = instance;
+            if (localInstance == null) {
+                localInstance = instance = new SplashAdProvider(context);
+            }
+        }
+        return localInstance;
     }
 
     private void loadCachedAds() {
@@ -115,7 +132,7 @@ class SplashAdProvider {
             return;
         }
         needsFlushCache = false;
-        ads.get().clear();
+        ads.clear();
         final Iterator<Ad> itr = downloadedAds.get().iterator();
         Ad ad;
         while (itr.hasNext()) {
@@ -125,7 +142,6 @@ class SplashAdProvider {
             itr.remove();
         }
         downloadedAds.persist();
-        ads.persist();
         garbageCollectAdFiles();
     }
 
@@ -135,26 +151,31 @@ class SplashAdProvider {
      *
      * @param items
      */
-    void newAdsReceived(List<Ad> items) {
-        ResanaLog.d(TAG, "newAdsReceived: ");
-        if (!isLoadingCachedAds) {
-            for (Ad item : items) {
-                if (!ApkManager.getInstance(appContext).isApkInstalled(item)) {
-                    if (numberOfAdsInQueue(item.data.id) < item.data.ctl) {
-                        ads.get().add(item);
-                        ResanaLog.d(TAG, "newAdsReceived: adding item to ads. ads size: " + ads.get().size());
-                    }
-                }
-            }
-            ads.needsPersist();
-            ads.persistIfNeeded();
-            updateAdQueues();
+    private void newAdsReceived(List<Ad> items) {
+        pruneAds(items);
+        ResanaLog.d(TAG, "newAdsReceived: ads size=" + items.size());
+        for (Ad item : items) {
+            if (item.data.hot)
+                ads.add(0, item);
+            else ads.add(item);
+        }
+        updateAdQueues();
+    }
+
+    private void pruneAds(List<Ad> ads) {
+        ResanaLog.d(TAG, "pruneAds:");
+        List<Ad> toRemove = new ArrayList<>();
+        for (Ad ad : ads) {
+            if (ad.isInvalid(appContext))
+                toRemove.add(ad);
+        }
+        for (Ad ad : toRemove) {
+            ads.remove(ad);
         }
     }
 
     private void cachedAdsLoaded(BoundedLinkedHashSet<Ad> ads, LinkedHashSet<Ad> dlAds) {
         ResanaLog.d(TAG, "cachedAdsLoaded: ");
-        this.ads = createAdsPersistableObject(ads);
         this.downloadedAds = createDownloadedAdsPersistableObject();
         for (Ad s : dlAds)
             addToDownloadedAds(s);
@@ -247,7 +268,7 @@ class SplashAdProvider {
 
     private int numberOfAdsInQueue(long adId) {
         int res = 0;
-        Iterator<Ad> adsItr = ads.get().iterator();
+        Iterator<Ad> adsItr = ads.iterator();
         while (adsItr.hasNext()) {
             Ad ad = adsItr.next();
             if (ad.data.id == adId)
@@ -281,9 +302,6 @@ class SplashAdProvider {
 
     private void updateAdQueues() {
         ResanaLog.d(TAG, "updateAdQueues: ");
-        if (isLoadingCachedAds)
-            return;
-        pruneAds();
         pruneDownloadedAds();
         downloadMoreAdsIfNeeded();
     }
@@ -321,23 +339,21 @@ class SplashAdProvider {
 
     private Ad getNextReadyToDownloadAd() {
         ResanaLog.d(TAG, "getNextReadyToDownloadAd: ");
-        Iterator<Ad> itr = ads.get().iterator();
+        Iterator<Ad> itr = ads.iterator();
         Ad ad = null;
         while (itr.hasNext() && ad == null) {
             ad = itr.next();
             itr.remove();
 //            if (ad.isInvalid()) //todo
 //                ad = null;
-            ads.needsPersist();
         }
-        ads.persistIfNeeded();
         return ad;
     }
 
     private boolean shouldDownloadMoreAds() {
         ResanaLog.d(TAG, "shouldDownloadMoreAds: ");
         return downloadedAds.get().size() + currentlyDownloadingAds < downloadedAdsQueueLength
-                && ads.get().size() > 0;
+                && ads.size() > 0;
     }
 
     private void lockAdFiles(Ad ad) {
@@ -365,20 +381,6 @@ class SplashAdProvider {
         locks.put(id, lock);
     }
 
-    private void pruneAds() {
-        ResanaLog.d(TAG, "pruneAds: ");
-        final Iterator<Ad> iterator = ads.get().iterator();
-        Ad ad;
-        while (iterator.hasNext()) {
-            ad = iterator.next(); //todo
-//            if (ad.isInvalid()) {
-//                iterator.remove();
-//                ads.needsPersist();
-//            }
-        }
-        ads.persistIfNeeded();
-    }
-
     private void pruneDownloadedAds() {
         ResanaLog.d(TAG, "pruneDownloadedAds: ");
         final Iterator<Ad> iterator = downloadedAds.get().iterator();
@@ -395,7 +397,20 @@ class SplashAdProvider {
         downloadedAds.persistIfNeeded();
         garbageCollectAdFiles();
     }
-//todo handle view and click reports
+
+    private static class AdsReceivedDelegate extends Delegate {
+        Context context;
+
+        AdsReceivedDelegate(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        void onFinish(boolean success, Object... args) {
+            if (success)
+                SplashAdProvider.getInstance(context).newAdsReceived((List<Ad>) args[0]);
+        }
+    }
 
     private static class LoadCacheAdsDelegate extends Delegate {
         WeakReference<SplashAdProvider> providerRef;
