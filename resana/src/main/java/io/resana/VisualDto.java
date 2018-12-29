@@ -19,10 +19,15 @@ class VisualDto implements Parcelable, Serializable {
     @SerializedName("hrz")
     LandingDto hrz;
 
+    //only for splash dto
+    @SerializedName("sp")
+    LandingDto splash;
+
     protected VisualDto(Parcel in) {
         org = in.readParcelable(LandingDto.class.getClassLoader());
         sq = in.readParcelable(LandingDto.class.getClassLoader());
         hrz = in.readParcelable(LandingDto.class.getClassLoader());
+        splash = in.readParcelable(LandingDto.class.getClassLoader());
     }
 
     public static final Creator<VisualDto> CREATOR = new Creator<VisualDto>() {
@@ -47,5 +52,6 @@ class VisualDto implements Parcelable, Serializable {
         dest.writeParcelable(org, flags);
         dest.writeParcelable(sq, flags);
         dest.writeParcelable(hrz, flags);
+        dest.writeParcelable(splash, flags);
     }
 }
