@@ -43,7 +43,9 @@ class NativeAdProvider {
         adsMap = Collections.synchronizedMap(new HashMap<String, List<Ad>>());
         downloadedAds = Collections.synchronizedList(new ArrayList<String>());
         blockedZones = Util.getBlockedZones(context);
-        NetworkManager.getInstance().getNativeAds(new AdsReceivedDelegate(appContext));
+        if (ResanaConfig.gettingNativeAds(appContext))
+            NetworkManager.getInstance().getNativeAds(new AdsReceivedDelegate(appContext));
+        else ResanaLog.e(TAG, "NativeAdProvider: nativeAd is not mentioned in resana config");
     }
 
     private boolean isBlockedZone(String zone) {
@@ -193,6 +195,10 @@ class NativeAdProvider {
     }
 
     NativeAd getAd(String zone) {
+        if (!ResanaConfig.gettingNativeAds(appContext)) {
+            ResanaLog.e(TAG, "getAd: nativeAd is not mentioned in resana config");
+            return null;
+        }
         ResanaLog.d(TAG, "getAd: ");
         if (ResanaInternal.instance.isInDismissRestTime()) {
             ResanaLog.d(TAG, "getAd: Native dismissRestTime");
