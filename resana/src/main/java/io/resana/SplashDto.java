@@ -9,9 +9,6 @@ import java.io.Serializable;
 
 
 class SplashDto extends AdDto implements Parcelable, Serializable {
-    @SerializedName("pic")
-    @Mandatory
-    String pic;
 
     @SerializedName("pcolor")
     String progressColor;
@@ -21,7 +18,6 @@ class SplashDto extends AdDto implements Parcelable, Serializable {
 
     private SplashDto(Parcel in) {
         super(in);
-        pic = in.readString();
         progressColor = in.readString();
         duration = in.readInt();
     }
@@ -29,7 +25,6 @@ class SplashDto extends AdDto implements Parcelable, Serializable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         super.writeToParcel(dest, flags);
-        dest.writeString(pic);
         dest.writeString(progressColor);
         dest.writeInt(duration);
     }

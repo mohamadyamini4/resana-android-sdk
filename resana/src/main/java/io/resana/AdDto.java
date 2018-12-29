@@ -6,6 +6,7 @@ import android.os.Parcelable;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
+import java.util.List;
 
 abstract class AdDto implements Parcelable, Serializable {
     static final int AD_TYPE_SUBTITLE = 0;
@@ -42,6 +43,9 @@ abstract class AdDto implements Parcelable, Serializable {
     @SerializedName("intent")
     String intent;
 
+    @SerializedName("v")
+    List<VisualDto> visuals;
+
     @SerializedName("lnd")
     LandingDto landing;
 
@@ -69,6 +73,7 @@ abstract class AdDto implements Parcelable, Serializable {
         version = in.readInt();
         link = in.readString();
         intent = in.readString();
+        visuals = in.createTypedArrayList(VisualDto.CREATOR);
         landing = in.readParcelable(LandingDto.class.getClassLoader());
         apk = in.readParcelable(ApkDto.class.getClassLoader());
         resanaLabel = in.readParcelable(ResanaLabelDto.class.getClassLoader());
@@ -88,6 +93,7 @@ abstract class AdDto implements Parcelable, Serializable {
         dest.writeInt(version);
         dest.writeString(link);
         dest.writeString(intent);
+        dest.writeTypedList(visuals);
         dest.writeParcelable(landing, flags);
         dest.writeParcelable(apk, flags);
         dest.writeParcelable(resanaLabel, flags);

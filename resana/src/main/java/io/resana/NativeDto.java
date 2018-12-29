@@ -6,14 +6,8 @@ import android.os.Parcelable;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
-import java.util.List;
 
 class NativeDto extends AdDto implements Parcelable, Serializable {
-
-    String background; //todo check it
-
-    @SerializedName("v")
-    List<VisualDto> visuals;
 
     @SerializedName("texts")
     TextDto texts;
@@ -21,16 +15,12 @@ class NativeDto extends AdDto implements Parcelable, Serializable {
 
     protected NativeDto(Parcel in) {
         super(in);
-        background = in.readString();
-        visuals = in.createTypedArrayList(VisualDto.CREATOR);
         texts = in.readParcelable(TextDto.class.getClassLoader());
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         super.writeToParcel(dest, flags);
-        dest.writeString(background);
-        dest.writeTypedList(visuals);
         dest.writeParcelable(texts, flags);
     }
 
