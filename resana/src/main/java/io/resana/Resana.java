@@ -62,12 +62,12 @@ public class Resana {
         ResanaLog.setLogLevel(logLevel);
     }
 
-    public NativeAd getNativeAd(boolean hasTitle) {
-        return ResanaInternal.getInstance(appContext).getNativeAd(hasTitle);
+    public NativeAd getNativeAd() {
+        return ResanaInternal.getInstance(appContext).getNativeAd();
     }
 
-    public NativeAd getNativeAd(boolean hasTitle, String zone) {
-        return ResanaInternal.getInstance(appContext).getNativeAd(hasTitle, zone);
+    public NativeAd getNativeAd(String zone) {
+        return ResanaInternal.getInstance(appContext).getNativeAd(zone);
     }
 
     public void onNativeAdRendered(NativeAd ad) {
@@ -75,11 +75,7 @@ public class Resana {
     }
 
     public void onNativeAdClicked(Context context, NativeAd ad) {
-        onNativeAdClicked(context, ad, null);
-    }
-
-    public void onNativeAdClicked(Context context, NativeAd ad, AdDelegate adDelegate) {
-        ResanaInternal.getInstance(context).onNativeAdClicked(context, ad, adDelegate);
+        ResanaInternal.getInstance(context).onNativeAdClicked(context, ad);
     }
 
     public void onAdDismissed(String secretKey, DismissOption reason) {

@@ -102,16 +102,16 @@ class ResanaInternal {
         return ((System.currentTimeMillis() / 1000) - Util.getControlsTS(appContext)) >= Util.getControlsTTL(appContext);
     }
 
-    NativeAd getNativeAd(boolean hasTitle) {
-        return getNativeAd(hasTitle, "");
+    NativeAd getNativeAd() {
+        return getNativeAd("");
     }
 
-    NativeAd getNativeAd(boolean hasTitle, String zone) {
+    NativeAd getNativeAd(String zone) {
         if (!ResanaConfig.gettingNativeAds(appContext)) {
             ResanaLog.e(TAG, "You didn't mention native ads in resana config");
             return null;
         }
-        return NativeAdProvider.getInstance(appContext).getAd(hasTitle, zone);
+        return NativeAdProvider.getInstance(appContext).getAd(zone);
     }
 
     void attachSplashViewer(SplashAdView adView) {
@@ -169,9 +169,8 @@ class ResanaInternal {
 //        sendToServer(splashProvider.getRenderAck(ad));
     }
 
-    void onNativeAdClicked(Context context, NativeAd ad, AdDelegate delegate) {
-        NativeAdProvider.getInstance(appContext).onNativeAdClicked(context, ad, delegate);
-//        GoalActionMeter.getInstance(appContext).checkReport(ad.getSecretKey());
+    void onNativeAdClicked(Context context, NativeAd ad) {
+        NativeAdProvider.getInstance(appContext).onNativeAdClicked(context, ad);
     }
 
     void onSplashClicked(Ad ad) {

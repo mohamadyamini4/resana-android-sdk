@@ -154,7 +154,7 @@ class NativeAdProvider {
         return downloadedAds.contains(ad.getId());
     }
 
-    private Ad internalGetAd(boolean hasTitle, String zone) {
+    private Ad internalGetAd(String zone) {
         if (adsMap == null) {
             ResanaLog.e(TAG, "internalGetAd: ads map is null");
             return null;
@@ -191,17 +191,7 @@ class NativeAdProvider {
         }
     }
 
-    /**
-     * will check whether an ad has a title or not
-     *
-     * @param ad
-     * @return
-     */
-    private boolean hasTitle(Ad ad) {
-        return ((NativeDto) ad.data).texts != null && ((NativeDto) ad.data).texts.titleText != null;
-    }
-
-    NativeAd getAd(boolean hasTitle, String zone) {
+    NativeAd getAd(String zone) {
         ResanaLog.d(TAG, "getAd: ");
         if (ResanaInternal.instance.isInDismissRestTime()) {
             ResanaLog.d(TAG, "getAd: Native dismissRestTime");
@@ -212,7 +202,7 @@ class NativeAdProvider {
             ResanaLog.e(TAG, "getAd: zone " + zone + " is blocked");
             return null;
         }
-        final Ad ad = internalGetAd(hasTitle, zone);
+        final Ad ad = internalGetAd(zone);
         for (Map.Entry<String, List<Ad>> entry : adsMap.entrySet()) {//todo remove this logging all ads
             Log.e(TAG, "zone: " + entry.getKey());
             List<Ad> addd = entry.getValue();
