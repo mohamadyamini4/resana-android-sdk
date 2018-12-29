@@ -35,10 +35,6 @@ class SplashAdProvider {
     private HashMap<String, Integer> locks = new HashMap<>();
     private List<Ad> toBeDeletedAds = new ArrayList<>();
 
-    private List<Ad> waitingToRender = new ArrayList<>();
-    private List<Ad> waitingToClick = new ArrayList<>();
-    private List<Ad> waitingToLandingClick = new ArrayList<>();
-
     private boolean needsFlushCache;
     private WeakReference<SplashAdView> adViewerRef;
 
@@ -182,7 +178,6 @@ class SplashAdProvider {
                 viewer.startShowingAd(ad);
                 AdVersionKeeper.adRendered(ad);
                 roundRobinOnAds();
-                waitingToRender.add(ad);
                 downloadedAds.persist();
                 updateAdQueues();
             } else {
