@@ -104,7 +104,6 @@ class FileManager {
     void deleteOldAndCorruptedFiles() {
         List<FileSpec> toDelete = new ArrayList<>();
         File resanaCacheDir = StorageManager.getCacheDir(appContext);
-        File resanaApkDir = StorageManager.getApksDir(appContext);
         String[] fileNames = resanaCacheDir.list();
         if (fileNames == null)
             return;
@@ -114,16 +113,6 @@ class FileManager {
             if (getBoolean(appContext, f.getName() + PREF_DOWNLOADING_APK, false)
                     || (System.currentTimeMillis() - f.lastModified()) >= deleteTime) {
                 toDelete.add(new FileSpec(fileName1));
-            }
-        }
-        fileNames = resanaApkDir.list();
-        if (fileNames == null)
-            return;
-        for (String fileName : fileNames) {
-            File f = new File(resanaApkDir, fileName);
-            if (getBoolean(appContext, f.getName() + PREF_DOWNLOADING_APK, false)
-                    || (System.currentTimeMillis() - f.lastModified()) >= deleteTime) {
-                toDelete.add(new FileSpec(FileSpec.DIR_TYPE_APKS, fileName));
             }
         }
         deleteFiles(toDelete, null);
