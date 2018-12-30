@@ -1,7 +1,5 @@
 package io.resana;
 
-import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -35,18 +33,14 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener {
     Ad currAd;
 
     private Delegate delegate;
-    private Activity activity;
     private static final int LOAD_AD_TIME_OUT = 3 * 1000;
-    public static final int DEFAULT_SPLASH_DURATION = 3 * 1000;
+    public static final int DEFAULT_SPLASH_DURATION = 5 * 1000;
     private int splashDuration = DEFAULT_SPLASH_DURATION;
     private long lastShowAdRequestTime = -1;
 
     private WeakRunnable<SplashAdView> prepareSplashTimedOut = new PrepareSplashTimedOut(this);
 
     Handler handler = new Handler();
-
-    private Dialog landDialog;
-    private LandingView landView;
 
     public static abstract class Delegate {
         public abstract void onFinish();
@@ -144,30 +138,16 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener {
                         || currAd.data.link != null);
     }
 
-    public void setup(Activity activity, Delegate delegate) {
-        setup(activity, null, delegate);
-    }
-
-    @Deprecated
-    public void setup(Activity activity, Resana resana, Delegate delegate) {
-        if (activity == null)
-            throw new IllegalArgumentException("Activity object can't be null");
-        if (resana == null)
-            throw new IllegalArgumentException("Resana object can't be null");
+    public void setup(Delegate delegate) {
         if (delegate == null)
             throw new IllegalArgumentException("Delegate object can't be null");
-        if (resana.instance == null)
-            throw new RuntimeException("resana object is released!");
         this.resana = Resana.getInstance();
         this.delegate = delegate;
-        this.activity = activity;
     }
 
     public boolean isShowingAd() {
         if (currAd == null)
             return false;
-        if (landDialog != null)
-            return true;
         //even if view goes to a bad state this will
         //return false in a few seconds
         return System.currentTimeMillis() - lastShowAdRequestTime < splashDuration + LOAD_AD_TIME_OUT;
@@ -177,7 +157,7 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener {
         ResanaLog.v(TAG, "showSplash");
         handler.postDelayed(prepareSplashTimedOut, LOAD_AD_TIME_OUT);
         lastShowAdRequestTime = System.currentTimeMillis();
-        ResanaInternal resanaInternal = Resana.getInstance().instance;
+        ResanaInternal resanaInternal = resana.instance;
         if (resanaInternal == null) {
             ResanaLog.w(TAG, "The resana reference object provided in setup phase is released!");
             onFail("The resana object provided in setup phase is released!");
