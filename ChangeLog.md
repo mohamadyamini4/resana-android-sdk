@@ -1,5 +1,14 @@
 # Resana Change Log
 
+## 8.0.0 STABLE
+*  remove create methods
+*  release method deprecated and will be removed on January 2019
+*  remove title from getting native ads
+*  make Resana class Singleton
+*  remove downloading apks directly from apk
+*  getVisual method is deprecated and will be removed on January 2019
+*  remoed AdDelegate
+
 ## 7.4.6 STABLE
 * bug fixed in showing ads instantly
 * bug fixed in getting ads with zone
