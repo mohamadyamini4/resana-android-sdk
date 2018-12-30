@@ -244,7 +244,7 @@ class NetworkManager {
      * @param zone
      */
     void getNativeAds(Delegate delegate, String zone) {
-        ResanaLog.d(TAG, "getNativeAds from server: ");
+        ResanaLog.d(TAG, "getNativeAds from server: " + (!zone.equals("") ? ("zone=" + zone) : ""));
         new GetAds(delegate, Ad.Types.nativeAd, zone).executeOnExecutor(getResponseExecutor);
     }
 
