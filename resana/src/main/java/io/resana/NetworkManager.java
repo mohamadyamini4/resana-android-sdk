@@ -244,6 +244,7 @@ class NetworkManager {
      * @param zone
      */
     void getNativeAds(Delegate delegate, String zone) {
+        ResanaLog.d(TAG, "getNativeAds from server: ");
         new GetAds(delegate, Ad.Types.nativeAd, zone).executeOnExecutor(getResponseExecutor);
     }
 
@@ -252,7 +253,6 @@ class NetworkManager {
      * @param delegate
      */
     void getNativeAds(Delegate delegate) {
-        ResanaLog.d(TAG, "getNativeAds:");
         getNativeAds(delegate, ""); //todo zone should not be null
     }
 
@@ -286,7 +286,9 @@ class NetworkManager {
             List<Ad> ads = new ArrayList<>();
             String url = NetworkManager.getInstance().generateGettingAdsUrl(type, zone);
             ResanaLog.d(TAG, "GetAds.doInBackground:  url=" + url);
-            String rawMsg = getResponseFromUrl(url, "GET", null, null);
+            Map<String, String> headers = new HashMap<>();
+            headers.put("X-RS-DEVICE-ID", ResanaInternal.deviceId);
+            String rawMsg = getResponseFromUrl(url, "GET", headers, null);
             if (rawMsg == null)
                 return null;
             ResanaLog.d(TAG, "GetAds.doInBackground: rawMsg=" + rawMsg);
