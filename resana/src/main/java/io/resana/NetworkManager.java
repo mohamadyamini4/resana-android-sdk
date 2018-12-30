@@ -256,6 +256,11 @@ class NetworkManager {
         getNativeAds(delegate, ""); //todo zone should not be null
     }
 
+    void getSplashAds(Delegate delegate) {
+        ResanaLog.d(TAG, "getSplashAds: ");
+        new GetAds(delegate, Ad.Types.splashAd).executeOnExecutor(getResponseExecutor);
+    }
+
     void sendReports(String type, String adId) {
         new PutReport(type, adId, null).execute(type, adId);
     }
