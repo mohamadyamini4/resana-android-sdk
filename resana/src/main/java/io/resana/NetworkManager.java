@@ -294,6 +294,8 @@ class NetworkManager {
             ResanaLog.d(TAG, "GetAds.doInBackground: rawMsg=" + rawMsg);
             try {
                 JSONArray adsArray = new JSONObject(rawMsg).getJSONObject("entity").getJSONArray("ads");
+                if (new JSONObject(rawMsg).getInt("errorCode") != 0)
+                    return null;
                 for (int i = 0; i < adsArray.length(); i++) {
                     Ad ad = new Ad(adsArray.get(i).toString());
                     ads.add(ad);
