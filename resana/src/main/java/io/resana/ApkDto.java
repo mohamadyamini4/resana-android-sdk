@@ -1,12 +1,10 @@
 package io.resana;
 
-import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.io.File;
 import java.io.Serializable;
 
 public class ApkDto implements Parcelable, Serializable {
@@ -73,13 +71,5 @@ public class ApkDto implements Parcelable, Serializable {
         dest.writeString(checksum);
         dest.writeInt(version);
         dest.writeInt(prepareTime);
-    }
-
-    String getApkFileName() {
-        return pkg + "_" + version;
-    }
-
-    File getApkFile(Context context) {
-        return new File(StorageManager.getApksDir(context), getApkFileName());
     }
 }
