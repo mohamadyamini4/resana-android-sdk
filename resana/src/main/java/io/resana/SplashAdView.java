@@ -11,8 +11,6 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
@@ -22,7 +20,7 @@ import java.lang.ref.WeakReference;
 
 import static io.resana.FileManager.FileSpec;
 
-public class SplashAdView extends FrameLayout implements View.OnClickListener, LandingView.Delegate {
+public class SplashAdView extends FrameLayout implements View.OnClickListener {
     private static final String TAG = ResanaLog.TAG_PREF + "SplashAdView";
     private ImageView image;
     private ImageView label;
@@ -56,26 +54,6 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener, L
         public abstract void onFailure(String reason);
 
         public abstract void closeVideo();
-
-        public void handleTelegramAction(String action) {
-        }
-
-        public String getTelegramChatData() {
-            return null;
-        }
-    }
-
-    @Override
-    public void closeLanding() {
-        dismissLanding();
-        progressAnim.resume();
-    }
-
-    @Override
-    public void landingActionClicked() {
-        landingClicked();
-        dismissLanding();
-        performAction(true);
     }
 
     public SplashAdView(Context context) {
@@ -123,22 +101,13 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener, L
         if (!allowClick())
             return;
         adClicked();
-        if (currAd.hasLanding())
-            openLanding();
-        else
-            performAction(false);
+        performAction(false);
     }
 
     private void adClicked() {
         final ResanaInternal resanaInternal = resana.instance;
         if (resanaInternal != null)
             resanaInternal.onSplashClicked(currAd);
-    }
-
-    private void landingClicked() {
-        final ResanaInternal resanaInternal = resana.instance;
-        if (resanaInternal != null)
-            resanaInternal.onSplashLandingClicked(currAd);
     }
 
     private void performAction(boolean fromLanding) {
@@ -168,23 +137,6 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener, L
         progressAnim = null;
     }
 
-    private void openLanding() {
-        progressAnim.pause();
-        landView = new LandingView(getContext());
-        landView.setDelegate(this);
-        landView.setData(currAd);
-        landDialog = new Dialog(activity);
-        landDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        landDialog.setCancelable(false);
-        landDialog.setContentView(landView, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        landDialog.getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
-        try {
-            landDialog.show();
-        } catch (Exception ignored) {
-            onFinish();
-        }
-    }
-
     private boolean allowClick() {
         return resana != null && resana.instance != null &&
                 (currAd.hasLanding()
@@ -192,6 +144,11 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener, L
                         || currAd.data.link != null);
     }
 
+    public void setup(Activity activity, Delegate delegate) {
+        setup(activity, null, delegate);
+    }
+
+    @Deprecated
     public void setup(Activity activity, Resana resana, Delegate delegate) {
         if (activity == null)
             throw new IllegalArgumentException("Activity object can't be null");
@@ -201,7 +158,7 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener, L
             throw new IllegalArgumentException("Delegate object can't be null");
         if (resana.instance == null)
             throw new RuntimeException("resana object is released!");
-        this.resana = resana;
+        this.resana = Resana.getInstance();
         this.delegate = delegate;
         this.activity = activity;
     }
@@ -220,7 +177,7 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener, L
         ResanaLog.v(TAG, "showSplash");
         handler.postDelayed(prepareSplashTimedOut, LOAD_AD_TIME_OUT);
         lastShowAdRequestTime = System.currentTimeMillis();
-        ResanaInternal resanaInternal = resana.instance;
+        ResanaInternal resanaInternal = Resana.getInstance().instance;
         if (resanaInternal == null) {
             ResanaLog.w(TAG, "The resana reference object provided in setup phase is released!");
             onFail("The resana object provided in setup phase is released!");
@@ -349,18 +306,6 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener, L
             labelBitmap.recycle();
             labelBitmap = null;
         }
-    }
-
-    private void dismissLanding() {
-        if (landDialog == null)
-            return;
-        try {
-            landDialog.dismiss();
-        } catch (Exception ignored) {
-        }
-        landView.freeBitmapResources();
-        landDialog = null;
-        landView = null;
     }
 
     private static class PrepareSplashTimedOut extends WeakRunnable<SplashAdView> {
