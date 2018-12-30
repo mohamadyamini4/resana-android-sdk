@@ -101,7 +101,7 @@ class ResanaInternal {
     }
 
     private boolean shouldGetControls() {
-        return ((System.currentTimeMillis() / 1000) - Util.getControlsTS(appContext)) >= Util.getControlsTTL(appContext);
+        return ((System.currentTimeMillis()) - (Util.getControlsTS(appContext)) * 1000) >= Util.getControlsTTL(appContext);
     }
 
     NativeAd getNativeAd(String zone) {

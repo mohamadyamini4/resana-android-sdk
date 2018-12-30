@@ -58,6 +58,10 @@ public class Resana {
         return localInstance;
     }
 
+    private Resana() {
+
+    }
+
     public void setLogLevel(int logLevel) {
         ResanaLog.setLogLevel(logLevel);
     }
