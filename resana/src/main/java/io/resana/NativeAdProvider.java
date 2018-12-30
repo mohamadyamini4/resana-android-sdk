@@ -19,6 +19,8 @@ import static io.resana.FileManager.Delegate;
 class NativeAdProvider {
     private static final String TAG = ResanaLog.TAG_PREF + "NativeAdProvider";
 
+    private static int retry = 0;
+
     private static NativeAdProvider instance;
     private Context appContext;
     private int adsQueueLength;
@@ -86,11 +88,11 @@ class NativeAdProvider {
         }
 
         for (Map.Entry<String, List<Ad>> entry : adsMap.entrySet()) {
-            Log.e(TAG, "zone: " + entry.getKey());
+            ResanaLog.d(TAG, "zone: " + entry.getKey());
             List<Ad> ad = entry.getValue();
             for (Ad a :
                     ad) {
-                Log.e(TAG, "ads: " + a.getId());
+                ResanaLog.d(TAG, "ads: " + a.getId());
             }
         }
         downloadFirstAdOfList();
@@ -315,6 +317,11 @@ class NativeAdProvider {
         void onFinish(boolean success, Object... args) {
             if (success)
                 NativeAdProvider.getInstance(context).newAdsReceived((List<Ad>) args[0], zone);
+            else {//todo double check here
+                retry++;
+                if (retry <= 2)
+                NetworkManager.getInstance().getNativeAds(this);
+            }
         }
     }
 
