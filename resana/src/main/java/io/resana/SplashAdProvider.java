@@ -31,7 +31,9 @@ class SplashAdProvider {
         this.adsQueueLength = 4;
         ads = Collections.synchronizedList(new ArrayList<Ad>());
         downloadedAds = Collections.synchronizedList(new ArrayList<String>());
-        NetworkManager.getInstance().getSplashAds(new AdsReceivedDelegate(context));
+        if (ResanaConfig.gettingSplashAds(appContext))
+            NetworkManager.getInstance().getSplashAds(new AdsReceivedDelegate(appContext));
+        else ResanaLog.e(TAG, "SplashAdProvider: splashAd is not mentioned in resana config");
     }
 
     static SplashAdProvider getInstance(Context context) {
@@ -127,6 +129,10 @@ class SplashAdProvider {
     }
 
     private void serveViewerIfPossible() {
+        if (!ResanaConfig.gettingSplashAds(appContext)) {
+            ResanaLog.e(TAG, "getAd: splashAd is not mentioned in resana config");
+            return;
+        }
         final SplashAdView viewer = adViewerRef.get();
         if (shouldCoolDownSplashViewing()) {
             viewer.cancelShowingAd("Cool Down Showing Splash.");
