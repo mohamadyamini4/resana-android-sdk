@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,15 +86,6 @@ class NativeAdProvider {
                 }
             }
         }
-
-        for (Map.Entry<String, List<Ad>> entry : adsMap.entrySet()) {
-            ResanaLog.d(TAG, "zone: " + entry.getKey());
-            List<Ad> ad = entry.getValue();
-            for (Ad a :
-                    ad) {
-                ResanaLog.d(TAG, "ads: " + a.getId());
-            }
-        }
         downloadFirstAdOfList();
     }
 
@@ -167,7 +157,7 @@ class NativeAdProvider {
         }
         List<Ad> adList = adsMap.get(zone);
         if (adList == null) {
-            ResanaLog.e(TAG, "getAd: no such " + zone + " zone");
+            ResanaLog.e(TAG, "internalGetAd: no such " + zone + " zone");
             return null;
         }
         if (adList.size() <= 1) {
@@ -182,17 +172,12 @@ class NativeAdProvider {
             if (ad.data.hot)
                 adList.add(0, ad);
             else adList.add(ad);
-            if (CoolDownHelper.shouldShowNativeAd(appContext))
-                return ad;
-            else {
-                ResanaLog.e(TAG, "internalGetAd: should not show ad");
-                return null;
-            }
+            downloadAdFiles(zone);
+            return ad;
         } else {
             ResanaLog.e(TAG, "internalGetAd: ad is not downloaded");
             adList.remove(ad);
-            if (!ad.data.hot)
-                adList.add(ad);
+            downloadAdFiles(zone);
             return null;
         }
     }
@@ -207,22 +192,16 @@ class NativeAdProvider {
             ResanaLog.d(TAG, "getAd: Native dismissRestTime");
             return null;
         }
-
         if (isBlockedZone(zone)) {
             ResanaLog.e(TAG, "getAd: zone " + zone + " is blocked");
             return null;
         }
-        final Ad ad = internalGetAd(zone);
-        for (Map.Entry<String, List<Ad>> entry : adsMap.entrySet()) {//todo remove this logging all ads
-            Log.e(TAG, "zone: " + entry.getKey());
-            List<Ad> addd = entry.getValue();
-            for (Ad a :
-                    addd) {
-                Log.e(TAG, "ads: " + a.getId());
-            }
+        if (!CoolDownHelper.shouldShowNativeAd(appContext)) {
+            ResanaLog.e(TAG, "getAd: should not show ad");
+           return null;
         }
+        final Ad ad = internalGetAd(zone);
         if (ad != null) {
-            downloadAdFiles(zone);
             ResanaLog.e(TAG, "getAd: " + ad.getId());//todo remove this log
             return new NativeAd(appContext, ad, AdDatabase.getInstance(appContext).generateSecretKey(ad));
         }
