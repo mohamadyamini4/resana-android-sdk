@@ -21,12 +21,10 @@ import static io.resana.FileManager.FileSpec;
 public class SplashAdView extends FrameLayout implements View.OnClickListener {
     private static final String TAG = ResanaLog.TAG_PREF + "SplashAdView";
     private ImageView image;
-    private ImageView label;
     private View progress;
     private Resana resana;
 
     private Bitmap imageBitmap;
-    private Bitmap labelBitmap;
 
     private AdViewCustomTranslateAnimation progressAnim;
 
@@ -76,11 +74,6 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener {
         image.setOnClickListener(this);
         image.setAdjustViewBounds(true);
         container.addView(image, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-
-        label = new ImageView(getContext());
-        label.setAdjustViewBounds(true);
-        label.setMaxWidth(AdViewUtil.getResanaLabelMaxWidth());
-        container.addView(label, new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT));
 
         progress = new View(getContext());
         container.addView(progress, new LayoutParams(LayoutParams.MATCH_PARENT, AdViewUtil.dpToPx(getContext(), 5), Gravity.BOTTOM));
@@ -175,22 +168,6 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener {
             splashDuration = ad.getDuration();
         handler.removeCallbacks(prepareSplashTimedOut);
         loadSplashImageFromFile();
-        setLabel();
-    }
-
-    private void setLabel() {
-        if ("none".equals(currAd.getLabelUrl(getContext())))
-            label.setVisibility(GONE);
-        else {
-            FileManager.getInstance(getContext()).loadBitmapFromFile(new FileSpec(currAd.getLabelFileName()), new LabelBitmapLoadedDelegate(this));
-        }
-    }
-
-    private void labelBitmapLoaded(boolean success, Object... bitmaps) {
-        if (!success)
-            return;
-        labelBitmap = (Bitmap) bitmaps[0];
-        label.setImageBitmap(labelBitmap);
     }
 
     void loadSplashImageFromFile() {
@@ -281,11 +258,6 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener {
             imageBitmap.recycle();
             imageBitmap = null;
         }
-        label.setImageDrawable(null);
-        if (labelBitmap != null) {
-            labelBitmap.recycle();
-            labelBitmap = null;
-        }
     }
 
     private static class PrepareSplashTimedOut extends WeakRunnable<SplashAdView> {
@@ -297,21 +269,6 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener {
         @Override
         void run(SplashAdView object) {
             object.splashAdDidNotLoadInTime();
-        }
-    }
-
-    private static class LabelBitmapLoadedDelegate extends FileManager.Delegate {
-        WeakReference<SplashAdView> viewRef;
-
-        LabelBitmapLoadedDelegate(SplashAdView view) {
-            viewRef = new WeakReference<>(view);
-        }
-
-        @Override
-        void onFinish(boolean success, Object... args) {
-            final SplashAdView view = viewRef.get();
-            if (view != null)
-                view.labelBitmapLoaded(success, args);
         }
     }
 
