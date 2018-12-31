@@ -12,7 +12,6 @@ import java.util.List;
 
 import static io.resana.FileManager.Delegate;
 import static io.resana.FileManager.PersistableObject;
-import static io.resana.FileManager.SPLASHES_FILE_NAME;
 
 class SplashAdProvider {
     private static final String TAG = ResanaLog.TAG_PREF + "SplashAdProvider";
@@ -23,11 +22,8 @@ class SplashAdProvider {
 
     private int adsQueueLength;
     private List<Ad> ads;
-    private String adsFileName;
-    private int downloadedAdsQueueLength;
     private PersistableObject<LinkedHashSet<Ad>> downloadedAds;
 
-    private int currentlyDownloadingAds;
     private HashMap<String, Integer> locks = new HashMap<>();
     private List<Ad> toBeDeletedAds = new ArrayList<>();
 
@@ -37,8 +33,6 @@ class SplashAdProvider {
         this.appContext = context.getApplicationContext();
         this.adsQueueLength = 4;
         ads = Collections.synchronizedList(new ArrayList<Ad>());
-        this.adsFileName = SPLASHES_FILE_NAME;
-        this.downloadedAdsQueueLength = 3;
         NetworkManager.getInstance().getSplashAds(new AdsReceivedDelegate(context));
     }
 
@@ -87,12 +81,13 @@ class SplashAdProvider {
         pruneAds(items);
         ResanaLog.d(TAG, "newAdsReceived: ads size=" + items.size());
         for (Ad item : items) {
+            if (ads.size() >= adsQueueLength)
+                return;
             if (item.data.hot)
                 ads.add(0, item);
             else ads.add(item);
         }
         downloadFirstAdOfList();
-//        updateAdQueues();
     }
 
     private void pruneAds(List<Ad> ads) {
@@ -149,17 +144,18 @@ class SplashAdProvider {
     }
 
     private Ad getNextReadyToRenderAd() {
-        ResanaLog.d(TAG, "getNextReadyToRenderAd: ");
-        final Iterator<Ad> iterator = downloadedAds.get().iterator();
-        Ad res = null;
-        Ad ad;
-        while (iterator.hasNext()) {
-            ad = iterator.next();
-            res = ad;
-            break;
-        }
-        downloadedAds.persistIfNeeded();
-        garbageCollectAdFiles();
+        Ad res = ads.get(0);
+        ResanaLog.d(TAG, "getNextReadyToRenderAd: ad=" + res.getId());
+//        final Iterator<Ad> iterator = downloadedAds.get().iterator();
+//        Ad res = null;
+//        Ad ad;
+//        while (iterator.hasNext()) {
+//            ad = iterator.next();
+//            res = ad;
+//            break;
+//        }
+//        downloadedAds.persistIfNeeded();
+//        garbageCollectAdFiles();
         return res;
     }
 
@@ -208,34 +204,17 @@ class SplashAdProvider {
     private void updateAdQueues() {
         ResanaLog.d(TAG, "updateAdQueues: ");
         pruneDownloadedAds();
-        downloadMoreAdsIfNeeded();
-    }
-
-    private void downloadMoreAdsIfNeeded() {
-        ResanaLog.d(TAG, "downloadMoreAdsIfNeeded: ");
-        Ad ad;
-        while (shouldDownloadMoreAds()) {
-            ad = getNextReadyToDownloadAd();
-            if (ad != null)
-                downloadAndCacheAd(ad);
-        }
     }
 
     private void downloadAndCacheAd(final Ad ad) {
         ResanaLog.d(TAG, "downloadAndCacheAd: ");
         lockAdFiles(ad);
-        currentlyDownloadingAds++;
         FileManager.getInstance(appContext).downloadAdFiles(ad, new DownloadAndCacheAdDelegate(this, ad));
     }
 
     private void downloadAndCacheAdFinished(boolean success, Ad ad) {
         ResanaLog.d(TAG, "downloadAndCacheAdFinished: ");
         unlockAdFiles(ad);
-        currentlyDownloadingAds--;
-        if (success && downloadedAds.get().size() < downloadedAdsQueueLength) {
-            addToDownloadedAds(ad);
-            downloadedAds.persist();
-        }
         if (!success) {
             toBeDeletedAds.add(ad);
             garbageCollectAdFiles();
@@ -253,12 +232,6 @@ class SplashAdProvider {
 //                ad = null;
         }
         return ad;
-    }
-
-    private boolean shouldDownloadMoreAds() {
-        ResanaLog.d(TAG, "shouldDownloadMoreAds: ");
-        return downloadedAds.get().size() + currentlyDownloadingAds < downloadedAdsQueueLength
-                && ads.size() > 0;
     }
 
     private void lockAdFiles(Ad ad) {
