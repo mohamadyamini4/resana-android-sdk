@@ -1,9 +1,11 @@
 package io.resana;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -100,12 +102,30 @@ public class SplashAdView extends FrameLayout implements View.OnClickListener {
     private void performAction(boolean fromLanding) {
         ResanaLog.d(TAG, "performAction() fromLanding = [" + fromLanding + "]");
         final Intent intentAction = AdViewUtil.getAdActionIntent(currAd);
-        if (intentAction != null) {
-            handleIntentAction(intentAction);
-            return;
+        if (currAd.data.intent != null) {
+            Intent intent = AdViewUtil.parseIntentString(currAd.data.intent);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (intent.resolveActivity(getContext().getPackageManager()) != null)
+                getContext().startActivity(Intent.createChooser(intent, "انتخاب کنید"));
+            else
+                ResanaLog.e(TAG, "handleLandingClick: unable to resolve intent");
+        } else if (currAd.data.link != null) {
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(currAd.getLink()));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (currAd.getLink().contains("instagram.com"))
+                    i.setPackage("com.instagram.android");
+                if (currAd.getLink().contains("cafebazaar.ir"))
+                    i.setPackage("com.farsitel.bazaar");
+                getContext().startActivity(i);
+            } catch (ActivityNotFoundException e) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(currAd.getLink()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (intent.resolveActivity(getContext().getPackageManager()) != null)
+                    getContext().startActivity(intent);
+                else ResanaLog.e(TAG, "handleLandingClick: unable to resolve activity");
+            }
         }
-        if (fromLanding)
-            progressAnim.resume();
     }
 
     private void handleIntentAction(Intent intent) {
