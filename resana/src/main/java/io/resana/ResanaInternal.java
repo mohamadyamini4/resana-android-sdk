@@ -28,7 +28,7 @@ import static io.resana.ResanaPreferences.saveString;
 
 class ResanaInternal {
     private static final String TAG = ResanaLog.TAG_PREF + "Resana";
-    static final String SDK_VERSION = "8.0.0";
+    static final String SDK_VERSION = "8.2.0";
     static final int SDK_VERSION_NUM = 19;
     static final int DB_VERSION = 9;
 

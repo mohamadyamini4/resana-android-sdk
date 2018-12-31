@@ -3,7 +3,7 @@ apply plugin: 'com.jfrog.artifactory'
 apply plugin: 'digital.wup.android-maven-publish'
 
 def packageName = 'io.resana'
-def libraryVersion = '8.0.0'
+def libraryVersion = '8.2.0'
 
 android {
     compileSdkVersion 28
@@ -29,7 +29,7 @@ android {
     }
 }
 
-version = '8.0.0'
+version = '8.2.0'
 
 task jar(type: Jar, dependsOn: 'assembleRelease') {
     from fileTree(dir: 'build/intermediates/classes/release')
