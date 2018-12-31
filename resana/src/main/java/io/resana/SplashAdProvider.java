@@ -75,7 +75,7 @@ class SplashAdProvider {
         ResanaLog.d(TAG, "newAdsReceived: ads size=" + items.size());
         for (Ad item : items) {
             if (ads.size() >= adsQueueLength)
-                return;
+                break;
             if (item.data.hot)
                 ads.add(0, item);
             else ads.add(item);
@@ -96,6 +96,9 @@ class SplashAdProvider {
     }
 
     private void downloadFirstAdOfList() {
+        ResanaLog.d(TAG, "downloadFirstAdOfList: ");
+        if (ads.size() < 1)
+            return;
         final Ad ad = ads.get(0);
         downloadAdFiles(ad, new Delegate() {
             @Override
