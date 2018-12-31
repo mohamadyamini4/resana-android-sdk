@@ -7,11 +7,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 import static io.resana.FileManager.Delegate;
-import static io.resana.FileManager.PersistableObject;
 
 class SplashAdProvider {
     private static final String TAG = ResanaLog.TAG_PREF + "SplashAdProvider";
@@ -22,7 +20,7 @@ class SplashAdProvider {
 
     private int adsQueueLength;
     private List<Ad> ads;
-    private PersistableObject<LinkedHashSet<Ad>> downloadedAds;
+    private List<String> downloadedAds;
 
     private HashMap<String, Integer> locks = new HashMap<>();
     private List<Ad> toBeDeletedAds = new ArrayList<>();
@@ -33,6 +31,7 @@ class SplashAdProvider {
         this.appContext = context.getApplicationContext();
         this.adsQueueLength = 4;
         ads = Collections.synchronizedList(new ArrayList<Ad>());
+        downloadedAds = Collections.synchronizedList(new ArrayList<String>());
         NetworkManager.getInstance().getSplashAds(new AdsReceivedDelegate(context));
     }
 
@@ -49,13 +48,12 @@ class SplashAdProvider {
 
     boolean isAdAvailable() {
         ResanaLog.d(TAG, "isAdAvailable: ");
-        return downloadedAds == null || downloadedAds.get().size() > 0;
+        return downloadedAds == null || downloadedAds.size() > 0;
     }
 
     void attachViewer(SplashAdView adView) {
         ResanaLog.d(TAG, "attachViewer: ");
         adViewerRef = new WeakReference<>(adView);
-        updateAdQueues();
         serveViewerIfPossible();
     }
 
@@ -67,7 +65,6 @@ class SplashAdProvider {
 
     void releaseAd(Ad ad) {
         ResanaLog.d(TAG, "releaseAd: ");
-        unlockAdFiles(ad);
         garbageCollectAdFiles();
     }
 
@@ -104,23 +101,31 @@ class SplashAdProvider {
 
     private void downloadFirstAdOfList() {
         final Ad ad = ads.get(0);
-        downloadAdFiles(ad, new Delegate() {//todo complete here
+        downloadAdFiles(ad, new Delegate() {
             @Override
             void onFinish(boolean success, Object... args) {
                 ResanaLog.e(TAG, "downloadFirstAdOfList: success=" + success + " ad=" + ad.getId());
+                if (success)
+                    addToDownloadedAds(ad);
+                else {
+                    ads.remove(ad);
+                    downloadFirstAdOfList();
+                }
             }
         });
     }
 
     private void downloadAdFiles(final Ad ad, Delegate delegate) {
-        VisualsManager.saveVisualsIndex(appContext, ad);
         FileManager.getInstance(appContext).downloadAdFiles(ad, delegate);
     }
 
     private void addToDownloadedAds(Ad ad) {
-        ResanaLog.d(TAG, "addToDownloadedAds: ");
-        downloadedAds.get().add(ad);
-        lockAdFiles(ad);
+        ResanaLog.d(TAG, "addToDownloadedAds: ad=" + ad.getId());
+        downloadedAds.add(ad.getId());
+    }
+
+    private boolean isAdDownloaded(Ad ad) {
+        return downloadedAds.contains(ad.getId());
     }
 
     private void serveViewerIfPossible() {
@@ -130,12 +135,8 @@ class SplashAdProvider {
         } else {
             final Ad ad = getNextReadyToRenderAd();
             if (ad != null) {
-                lockAdFiles(ad);
                 viewer.startShowingAd(ad);
                 AdVersionKeeper.adRendered(ad);
-                roundRobinOnAds();
-                downloadedAds.persist();
-                updateAdQueues();
             } else {
                 viewer.cancelShowingAd("No Splash Ad Available.");
             }
@@ -144,38 +145,20 @@ class SplashAdProvider {
     }
 
     private Ad getNextReadyToRenderAd() {
-        Ad res = ads.get(0);
-        ResanaLog.d(TAG, "getNextReadyToRenderAd: ad=" + res.getId());
-//        final Iterator<Ad> iterator = downloadedAds.get().iterator();
-//        Ad res = null;
-//        Ad ad;
-//        while (iterator.hasNext()) {
-//            ad = iterator.next();
-//            res = ad;
-//            break;
-//        }
-//        downloadedAds.persistIfNeeded();
-//        garbageCollectAdFiles();
-        return res;
-    }
-
-    private void roundRobinOnAds() {
-        ResanaLog.d(TAG, "roundRobinOnAds: ");
-        final Iterator<Ad> iterator = downloadedAds.get().iterator();
-        final Ad removed = iterator.next();
-        iterator.remove();
-        downloadedAds.get().add(removed);
-    }
-
-    private int numberOfAdsInQueue(long adId) {
-        int res = 0;
-        Iterator<Ad> adsItr = ads.iterator();
-        while (adsItr.hasNext()) {
-            Ad ad = adsItr.next();
-            if (ad.data.id == adId)
-                res++;
+        Ad ad = ads.get(0);
+        if (isAdDownloaded(ad)) {
+            ResanaLog.d(TAG, "getNextReadyToRenderAd: ad=" + ad.getId());
+            ads.remove(ad);
+            if (ad.data.hot)
+                ads.add(0, ad);
+            else ads.add(ad);
+            return ad;
+        } else {
+            ResanaLog.e(TAG, "getNextReadyToRenderAd: ad " + ad.getId() + " is not downloaded");
+            ads.remove(ad);
+            downloadFirstAdOfList();
+            return null;
         }
-        return res;
     }
 
     private boolean shouldCoolDownSplashViewing() {
@@ -201,81 +184,6 @@ class SplashAdProvider {
         }
     }
 
-    private void updateAdQueues() {
-        ResanaLog.d(TAG, "updateAdQueues: ");
-        pruneDownloadedAds();
-    }
-
-    private void downloadAndCacheAd(final Ad ad) {
-        ResanaLog.d(TAG, "downloadAndCacheAd: ");
-        lockAdFiles(ad);
-        FileManager.getInstance(appContext).downloadAdFiles(ad, new DownloadAndCacheAdDelegate(this, ad));
-    }
-
-    private void downloadAndCacheAdFinished(boolean success, Ad ad) {
-        ResanaLog.d(TAG, "downloadAndCacheAdFinished: ");
-        unlockAdFiles(ad);
-        if (!success) {
-            toBeDeletedAds.add(ad);
-            garbageCollectAdFiles();
-        }
-    }
-
-    private Ad getNextReadyToDownloadAd() {
-        ResanaLog.d(TAG, "getNextReadyToDownloadAd: ");
-        Iterator<Ad> itr = ads.iterator();
-        Ad ad = null;
-        while (itr.hasNext() && ad == null) {
-            ad = itr.next();
-            itr.remove();
-//            if (ad.isInvalid()) //todo
-//                ad = null;
-        }
-        return ad;
-    }
-
-    private void lockAdFiles(Ad ad) {
-        ResanaLog.d(TAG, "lockAdFiles: ");
-        /* a splash is locked when
-            - it is added to downloadedSplashes
-            - it is given to a splashViewer
-            - it is being downloaded and cached in storage
-        * */
-        final String id = ad.getId();
-        Integer lock = locks.get(id);
-        if (lock == null)
-            lock = 0;
-        lock++;
-        locks.put(id, lock);
-    }
-
-    private void unlockAdFiles(Ad ad) {
-        ResanaLog.d(TAG, "unlockAdFiles: ");
-        final String id = ad.getId();
-        Integer lock = locks.get(id);
-        if (lock == null)
-            lock = 0;
-        lock--;
-        locks.put(id, lock);
-    }
-
-    private void pruneDownloadedAds() {
-        ResanaLog.d(TAG, "pruneDownloadedAds: ");
-        final Iterator<Ad> iterator = downloadedAds.get().iterator();
-        Ad ad;
-        while (iterator.hasNext()) {
-            ad = iterator.next();//todo handle here
-//            if (ad.isInvalid()) {
-//                iterator.remove();
-//                unlockAdFiles(ad);
-//                toBeDeletedAds.add(ad);
-//                downloadedAds.needsPersist();
-//            }
-        }
-        downloadedAds.persistIfNeeded();
-        garbageCollectAdFiles();
-    }
-
     private static class AdsReceivedDelegate extends Delegate {
         Context context;
 
@@ -287,23 +195,6 @@ class SplashAdProvider {
         void onFinish(boolean success, Object... args) {
             if (success)
                 SplashAdProvider.getInstance(context).newAdsReceived((List<Ad>) args[0]);
-        }
-    }
-
-    private static class DownloadAndCacheAdDelegate extends Delegate {
-        WeakReference<SplashAdProvider> providerRef;
-        Ad ad;
-
-        DownloadAndCacheAdDelegate(SplashAdProvider provider, Ad ad) {
-            providerRef = new WeakReference<>(provider);
-            this.ad = ad;
-        }
-
-        @Override
-        void onFinish(boolean success, Object... args) {
-            final SplashAdProvider provider = providerRef.get();
-            if (provider != null)
-                provider.downloadAndCacheAdFinished(success, ad);
         }
     }
 }
