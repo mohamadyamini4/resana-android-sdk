@@ -12,7 +12,7 @@ allprojects {
  
     
 dependencies {
-    implementation( 'io.resana:resana:7.3.0@aar' ) {transitive = true}
+    implementation( 'io.resana:resana:8.0.0@aar' ) {transitive = true}
 }
 ```
 Resana progourd
@@ -59,18 +59,13 @@ first argument of this class is an array of ads you want to use and second is th
 * `ResanaConfig.VisualType.HORIZONTAL`: horizental visual of ad
 * `ResanaConfig.VisualType.OROGINAL`: original visual of ad
 
-Resana.init will only save configuration and will not start resana.
-for starting resana use Resana.create
+with `Resana.getInstance()` you can get an instance of resana. <br />
+with `Resana.setLogLevel(int logLevel)` you can set Resana log level. this methods can take these values:
 
-```ruby
-Resana resana = Resana.create(applicationContext);
-```
-<br />
-for disabling Resana you can use:
+`Resana.LOG_LEVEL_VERBOSE`: Resana will log every thing <br />
+`Resana.LOG_LEVEL_DEBUG`: Resana will log only debug logs <br />
+`Resana.LOG_LEVEL_NO_LOG`: Resana will log nothing <br />
 
-```ruby
-resana.release();
-```
 
 ### Resana Native Ad
 Developer of host application will decide how to show native ads.<br />
@@ -79,8 +74,8 @@ Resana itself handles click and landing showing.
 By the following code you can get a native ad and show it.
 
 ```ruby
-NativeAd ad = resana.getNativeAd(boolean hasTitle);
-NativeAd ad = resana.getNativeAd(boolean hasTitle, String zone);
+NativeAd ad = Resana.getInstance().getNativeAd();
+NativeAd ad = Resana.getInstance().getNativeAd(String zone);
 ```
 
 There are two main groups of native ads. ads which have titles and ads which not. <br />
@@ -91,27 +86,27 @@ getNativeAd can some times return null. in this case there is no ad available. i
 The following method will return the String should be written in the ads click button. 
 
 ```ruby
-String NativeAd.getCallForAction()
+String nativeAd.getCallForAction()
 ```
 
 <br />
 The following method will return ads background color.
 
 ```ruby
-String NativeAd.getBackgroundColor()
+String nativeAd.getBackgroundColor()
 ```
 
 <br />
 Texts that should be shown have two main groups. Title and Ordinary text. these are provided in two versions: short and medium. by the following methods you can get the texts of ad. <br />
 
 ```ruby
-String NativeAd.getShortOrdinaryText()
+String nativeAd.getShortOrdinaryText()
 
-String NativeAd.getMediumOrdinaryText()
+String nativeAd.getMediumOrdinaryText()
 
-String NativeAd.getShortTitleText()
+String nativeAd.getShortTitleText()
 
-String NativeAd.getMediumTitleText()
+String nativeAd.getMediumTitleText()
 ```
 
 Each native ad has some visuals. visual can be picture, video or webview. each visual has followings:
@@ -133,20 +128,20 @@ int getWidth();
 Some examples for getting visual data of an ad. <br />
 
 ```ruby
-int type = ad.getVisual().getSqVisual().getType()
+int type = ad.getSqVisual().getType()
  
-File file = ad.getVisual().getHrzLanding().getFile()
+File file = ad.getHrzLanding().getFile()
  
-int type = ad.getVisual().getHrzLanding().getType()
+int type = ad.getHrzLanding().getType()
  
-int height = ad.getVisual().getHrzLanding().getHeight()
+int height = ad.getHrzLanding().getHeight()
  
-int width = ad.getVisual().getHrzLanding().getWidth()
+int width = ad.getHrzLanding().getWidth()
 ```
 it is recommended to user Glide or Picasso library for showing ads image files.<br />
 
 ```ruby
-File file = ad.getVisual().getHrzLanding().getFile()
+File file = ad.getHrzLanding().getFile()
 
 Picasso.get().load(file).into(adImage);
 ```
@@ -165,21 +160,3 @@ resana.onNativeAdClicked(Context context, NativeAd ad, AdDelegate adDelegate)
 ```
 
 <br />
-if Ad has apk file to download and install methods of AdDelegate interface will be called.
-
-```ruby
-
-public interface AdDelegate {
-    void onPreparingProgram();
- 
-    void onPreparingProgramError();
- 
-    void onInstallingProgramError();
-}
-```
-<br />
-
-* `onPreparingProgram()` is called when file is downloading
-* `onPreparingProgramError()` is called when there is a problem in downloading file. This problem can be due to the slow or deadlock of the Internet or the lack of permission to write to the disk
-* `onInstallingProgramErro()` is called when there is a problem installing file. This problem can be due to lack of permission to write to the disk
-
