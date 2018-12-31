@@ -67,6 +67,7 @@ class ResanaInternal {
         FileManager.getInstance(appContext).cleanupOldFilesIfNeeded();
         FileManager.getInstance(appContext).deleteOldAndCorruptedFiles();
         NativeAdProvider.getInstance(appContext);
+        SplashAdProvider.getInstance(appContext);
         NetworkManager.checkUserAgent(appContext);
         start();
     }
