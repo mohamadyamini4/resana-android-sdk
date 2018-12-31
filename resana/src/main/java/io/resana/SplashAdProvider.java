@@ -148,8 +148,13 @@ class SplashAdProvider {
     }
 
     private Ad getNextReadyToRenderAd() {
+        if (ads.size() <= 1) {
+            NetworkManager.getInstance().getSplashAds(new AdsReceivedDelegate(appContext));
+            if (ads.size() == 0)
+                return null;
+        }
         Ad ad = ads.get(0);
-        if (isAdDownloaded(ad)) {
+        if (isAdDownloaded(ad)) {//round robin on ads
             ResanaLog.d(TAG, "getNextReadyToRenderAd: ad=" + ad.getId());
             ads.remove(ad);
             if (ad.data.hot)
