@@ -68,7 +68,7 @@ class NetworkManager {
     }
 
     static HttpURLConnection openConnection(String method, String url, Map<String, String> headers, Map<String, String> params) throws IOException {
-        ResanaLog.d("NetworkManager", "openConnection() method = [" + method + "], url = [" + url + "], headers = [" + headers + "], params = [" + params + "]");
+        ResanaLog.d(TAG, "openConnection() method = [" + method + "], url = [" + url + "], headers = [" + headers + "], params = [" + params + "]");
         HttpURLConnection connection;
         int responseCode;
         CookieManager cookieManager = new CookieManager();
