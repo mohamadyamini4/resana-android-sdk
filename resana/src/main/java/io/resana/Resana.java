@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Resana {
-    ResanaInternal instance;
+    static ResanaInternal instance;
 
     private static Resana resana;
 
@@ -42,7 +42,7 @@ public class Resana {
             throw new IllegalArgumentException("ResanaConfig cannot be null");
         appContext = context;
         ResanaConfig.saveConfigs(appContext, resanaConfig);
-        ResanaInternal.getInstance(appContext);
+        instance = ResanaInternal.getInstance(appContext);
     }
 
     public static Resana getInstance() {
