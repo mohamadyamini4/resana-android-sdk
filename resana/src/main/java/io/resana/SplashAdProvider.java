@@ -5,7 +5,6 @@ import android.content.Context;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import static io.resana.FileManager.Delegate;
@@ -20,9 +19,6 @@ class SplashAdProvider {
     private int adsQueueLength;
     private List<Ad> ads;
     private List<String> downloadedAds;
-
-    private HashMap<String, Integer> locks = new HashMap<>();
-    private List<Ad> toBeDeletedAds = new ArrayList<>();
 
     private WeakReference<SplashAdView> adViewerRef;
 
