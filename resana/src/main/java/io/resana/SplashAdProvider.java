@@ -160,6 +160,7 @@ class SplashAdProvider {
             if (ad.data.hot)
                 ads.add(0, ad);
             else ads.add(ad);
+            downloadFirstAdOfList();
             return ad;
         } else {
             ResanaLog.e(TAG, "getNextReadyToRenderAd: ad " + ad.getId() + " is not downloaded");
