@@ -6,7 +6,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import static io.resana.FileManager.Delegate;
@@ -65,7 +64,6 @@ class SplashAdProvider {
 
     void releaseAd(Ad ad) {
         ResanaLog.d(TAG, "releaseAd: ");
-        garbageCollectAdFiles();
     }
 
     /**
@@ -169,19 +167,6 @@ class SplashAdProvider {
     private boolean shouldServeViewer() {
         ResanaLog.d(TAG, "shouldServeViewer: ");
         return adViewerRef != null && adViewerRef.get() != null;
-    }
-
-    private void garbageCollectAdFiles() {
-        ResanaLog.d(TAG, "garbageCollectAdFiles: ");
-        final Iterator<Ad> itr = toBeDeletedAds.iterator();
-        while (itr.hasNext()) {
-            final Ad ad = itr.next();
-            if (locks.get(ad.getId()) != null && locks.get(ad.getId()) <= 0) {
-                locks.remove(ad.getId());
-                itr.remove();
-                FileManager.getInstance(appContext).deleteAdFiles(ad, null);
-            }
-        }
     }
 
     private static class AdsReceivedDelegate extends Delegate {
