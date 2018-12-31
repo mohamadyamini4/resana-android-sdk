@@ -1,5 +1,6 @@
 package io.resana;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -278,13 +279,21 @@ class NativeAdProvider {
             else
                 ResanaLog.e(TAG, "handleLandingClick: unable to resolve intent");
         } else if (ad.hasLink()) {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            i.setData(Uri.parse(ad.getLink()));
-            if (i.resolveActivity(context.getPackageManager()) != null)
-                context.startActivity(Intent.createChooser(i, "انتخاب کنید"));
-            else
-                ResanaLog.e(TAG, "handleLandingClick: unable to resolve link intent");
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(ad.getLink()));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (ad.getLink().contains("instagram.com"))
+                    i.setPackage("com.instagram.android");
+                if (ad.getLink().contains("cafebazaar.ir"))
+                    i.setPackage("com.farsitel.bazaar");
+                appContext.startActivity(i);
+            } catch (ActivityNotFoundException e) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(ad.getLink()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (intent.resolveActivity(context.getPackageManager()) != null)
+                    appContext.startActivity(intent);
+                else ResanaLog.e(TAG, "handleLandingClick: unable to resolve activity");
+            }
         }
     }
 
@@ -320,7 +329,7 @@ class NativeAdProvider {
             else {//todo double check here
                 retry++;
                 if (retry <= 2)
-                NetworkManager.getInstance().getNativeAds(this);
+                    NetworkManager.getInstance().getNativeAds(this);
             }
         }
     }
