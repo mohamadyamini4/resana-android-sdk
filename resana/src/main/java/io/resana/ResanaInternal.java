@@ -170,10 +170,6 @@ class ResanaInternal {
             NativeAdProvider.getInstance(appContext).showDismissOptions(context, ad, dismissOptions, instance);
     }
 
-    void onSplashLandingClicked(Ad ad) {
-        NetworkManager.getInstance().sendReports(Reports.landingClick, ad.getOrder());
-    }
-
     void onAdDismissed(String secretKey, DismissOption reason) {
         if (adsAreDismissible) {
             lastDismissTime = System.currentTimeMillis();
